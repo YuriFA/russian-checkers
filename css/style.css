@@ -1,4 +1,4 @@
-#draughts > div, #board > div {
+#checkers > div {
     float: left;
 }
 #board {
@@ -6,9 +6,13 @@
     height: 500px;
     border: 5px solid #999;
 }
-.cell {
-    width: 12.5%;
+.row {
     height: 12.5%;
+}
+.cell {
+    float: left;
+    width: 12.5%;
+    height: 100%;
 }
 .cell__black {
     background-color: #ccc;
@@ -33,11 +37,11 @@
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
-.p1:after {
+.check__red:after {
     background-color: red;
     border: 5px solid #c70000;
 }
-.p2:after {
+.check__blue:after {
     background-color: blue;
     border: 5px solid #05039e;
 }
