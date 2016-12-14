@@ -15,11 +15,11 @@ function Checkers() {
     var self = this;
 
     this.N = N;
-    this.TURNS = {
-        "true": COLORS.checker.light,
-        "false": COLORS.checker.dark
-    }
-    this.activeTurn = this.TURNS[true]; // true - light, false - dark
+    this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ];
+
+    this.currentTurn = this.TURNS[0]; // 0 - light, 1 - dark
+    this.currentChecker = null;
+
     this.boardDOM = document.getElementById('checkers');
 
     function Cell(x, y) {
@@ -81,10 +81,22 @@ function Checkers() {
             self.cell = cell;
             cell.cellDOM.appendChild(self.checkerDOM);
         }
+        this.canTurn = (currentTurn) => self.color == currentTurn;
+        this.isMovePossible = (currentChecker, currentTurn) => {
+            return self.canTurn && ( currentChecker == null ||  currentChecker != self);
+        }
 
     }
     function checkerClickHandle(e) {
+        var checker = this.obj;
+        if(checker !== undefined && checker.isMovePossible(self.currentChecker, self.currentTurn)) {
+            var actives = document.querySelector(".checker.active");
+            if(actives !== null) {
+                actives.classList.remove("active");
+            }
+            // self.showPossibleMoves(checker);       TODO
 
+        }
     }
 
     function drawBoard() {
