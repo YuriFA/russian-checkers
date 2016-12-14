@@ -1,62 +1,117 @@
-var N = 8;
-var WH = 100/N;
-var COLORS = {
-    "check": {
-        "red": "red",
-        "blue": "blue"
+const N = 8;
+const WH = 100 / N;
+const COLORS = {
+    "checker": {
+        "light": "red",
+        "dark": "blue"
     },
     "cell": {
-        "black": "black",
-        "white": "white"
+        "true": "black",
+        "false": "white"
     }
 };
 
+function Checkers() {
+    var self = this;
 
-function drawBoard(n) {
-    var board = document.createElement('div');
-    board.id = 'board';
-    for (var i = 1; i <= n; i++) {
-        var row = document.createElement('div');
-        row.className = 'row';
-        row.style.height = WH + '%';
-        for (var j = 1; j <= n; j++) {
-            var isBlack = j % 2 == i % 2;
-            var cell = drawCell(isBlack ? COLORS.cell.black : COLORS.cell.white, isBlack && (i < 4 || i > 5), i < 4? COLORS.check.blue : COLORS.check.red);
+    this.N = N;
+    this.TURNS = {
+        "true": COLORS.checker.light,
+        "false": COLORS.checker.dark
+    }
+    this.activeTurn = this.TURNS[true]; // true - light, false - dark
+    this.boardDOM = document.getElementById('checkers');
+
+    function Cell(x, y) {
+        var self = this;
+
+        this.x = x;
+        this.y = y;
+        this.id = "cell_" + x + "_" + y;
+        this.color = COLORS.cell[ x % 2 === y % 2 ];
+
+        this.checker = null;
+
+        this.cellDOM = (() => {
+            var cell = document.createElement('div');
+            cell.id = self.id;
+            cell.className = "cell cell__" + self.color;
             cell.style.width = WH + '%';
-            row.appendChild(cell);
+            cell.style.height = WH + '%';
+            if( !cell.hasOwnProperty('obj') ) {
+                cell.obj = self;
+            }
+            return cell;
+        })();
+
+
+        //public methods
+        this.getPostition = () => {
+            return {
+                "x": self.x,
+                "y": self.y
+            }
+        };
+        this.containChecker = (checker) => self.checker = checker;
+        this.hasChecker = () => self.checker != null;
+        this.removeChecker = () => self.checker = null;
+
+    }
+
+    function Checker(x, y) {
+        var self = this;
+
+        this.color = x < 4? COLORS.checker.dark : COLORS.checker.light;
+        this.cell = null;
+
+        this.checkerDOM = (() => {
+            var checker = document.createElement('div');
+            checker.className = "checker checker__" + self.color;
+            if( !checker.hasOwnProperty('obj') ) {
+                checker.obj = self;
+            }
+            checker.addEventListener('click', checkerClickHandle);
+            return checker;
+        })();
+
+        //public methods
+        this.isRed = () => self.color = COLORS.checker.light;
+        this.isBlue = () => self.color = COLORS.checker.dark;
+        this.belongsTo = (cell) => {
+            self.cell = cell;
+            cell.cellDOM.appendChild(self.checkerDOM);
         }
-        board.appendChild(row);
+
     }
-    return board;
+    function checkerClickHandle(e) {
+
+    }
+
+    function drawBoard() {
+        for (var i = 1; i <= self.N; i++) {
+            for (var j = 1; j <= self.N; j++) {
+                var cell = new Cell(i, j);
+                self.boardDOM.appendChild(cell.cellDOM);
+                drawChecker(cell);
+            }
+        }
+    }
+
+    function drawChecker(cell) {
+        if (cell.y % 2 === cell.x % 2 && (cell.x < 4 || cell.x > 5)) {
+          var checker = new Checker(cell.x, cell.y);
+          checker.belongsTo(cell);
+          cell.containChecker(checker);
+        }
+    }
+
+
+    drawBoard();
 }
 
-function checkClickHandle(event) {
-    var actives = document.querySelector('.check.active');
-    if(actives !== null){
-        actives.classList.remove('active');
-    }
-    this.classList.toggle('active');
+
+Checkers.init = function() {
+    window.checkers = new Checkers();
 }
 
-function cellClickHandle(event) {
-    if(this.children.length == 0)
-}
-
-function drawCell(color, withCheck=false, checkColor) {
-    var cell = document.createElement('div');
-    cell.className = "cell cell__" + color;
-    if(color == COLORS.cell.black) {
-        cell.addEventListener('click', cellClickHandle);
-    }
-    if ( withCheck ) {
-        var check = document.createElement('div');
-        check.className = "check check__" + checkColor;
-        check.addEventListener('click', checkClickHandle);
-        cell.appendChild(check);
-    }
-    return cell;
-}
-
-var board = drawBoard(N);
-var checkers = document.getElementById('checkers');
-checkers.appendChild(board);
+Checkers.init();
