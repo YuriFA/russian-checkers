@@ -22,6 +22,50 @@ function Checkers() {
 
     this.boardDOM = document.getElementById('checkers');
 
+    var gameController = {
+        moves: {
+            [ COLORS.checker.light ]: [
+                { "x": -1, "y": -1 },
+                { "x": -1, "y": 1 },
+                { "x": 1, "y": -1 },
+                { "x": 1, "y": 1 }
+            ],
+            [ COLORS.checker.dark ]: [
+                { "x": 1, "y": -1 },
+                { "x": 1, "y": 1 },
+                { "x": -1, "y": -1 },
+                { "x": -1, "y": 1 }
+            ]
+        },
+        showAvailableMoves(checker) {
+            var curPosition = checker.cell.getPosition();
+            var checkerMoves = this.moves[checker.color];
+            // var lCell = self.getCell(curPosition.x + checkerMoves.left.x, curPosition.y + checkerMoves.left.y);
+            // var rCell = self.getCell(curPosition.x + checkerMoves.right.x, curPosition.y + checkerMoves.right.y);
+            checkerMoves.forEach((v, i) => {
+                // console.log(v);
+                var cell = self.getCell(curPosition.x + v.x, curPosition.y + v.y);
+                if( cell != undefined) {
+                    if(i < 2) {
+                        if( !cell.hasChecker() ) {
+                            cell.highlight();
+                        } else {
+                            console.log('has other');
+                        }
+                    } else {
+                        if( cell.hasChecker() && checker.color !== cell.checker.color) {
+                            console.log('has enemy');
+                        }
+                    }
+                }
+                // console.log(cell);
+            });
+            // console.log(lCell, rCell);
+        },
+
+
+    }
+
     function Cell(x, y) {
         var self = this;
 
@@ -46,7 +90,7 @@ function Checkers() {
 
 
         //public methods
-        this.getPostition = () => {
+        this.getPosition = () => {
             return {
                 "x": self.x,
                 "y": self.y
@@ -55,7 +99,8 @@ function Checkers() {
         this.containChecker = (checker) => self.checker = checker;
         this.hasChecker = () => self.checker != null;
         this.removeChecker = () => self.checker = null;
-
+        this.highlight = () => self.cellDOM.classList.toggle("highlight");
+        this.unhighlight = () => self.cellDOM.classList.remove("highlight");
     }
 
     function Checker(x, y) {
@@ -87,14 +132,23 @@ function Checkers() {
         }
 
     }
+
+    this.getCell = (x, y) => {
+        var cell = document.getElementById('cell_' + x + '_' + y);
+        return cell? cell.obj : undefined;
+    }
+
     function checkerClickHandle(e) {
         var checker = this.obj;
         if(checker !== undefined && checker.isMovePossible(self.currentChecker, self.currentTurn)) {
             var actives = document.querySelector(".checker.active");
             if(actives !== null) {
                 actives.classList.remove("active");
+                var hl = document.querySelectorAll(".cell.highlight");
+                Object.keys(hl).map((v) => hl[v].obj.unhighlight());
             }
-            // self.showPossibleMoves(checker);       TODO
+            this.classList.toggle("active");
+            gameController.showAvailableMoves(checker);
 
         }
     }
@@ -119,6 +173,11 @@ function Checkers() {
 
 
     drawBoard();
+
+    var testChecker = new Checker(3, 2);
+    var testCell = document.getElementById('cell_5_5').obj;
+    testChecker.belongsTo(testCell);
+    testCell.containChecker(testChecker);
 }
 
 

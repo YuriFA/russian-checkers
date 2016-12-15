@@ -17,6 +17,10 @@
 .cell__white {
     background-color: #fff;
 }
+.cell.highlight {
+    background-color: #cfd22d;
+    opacity: 0.5;
+}
 .checker {
     height: 100%;
     cursor: pointer;
