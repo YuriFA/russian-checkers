@@ -10,6 +10,8 @@ const COLORS = {
         "false": "white"
     }
 };
+const LEFT = 0;
+const RIGHT = 1;
 
 function Checkers() {
     var self = this;
@@ -24,46 +26,63 @@ function Checkers() {
 
     var gameController = {
         moves: {
-            [ COLORS.checker.light ]: [
-                { "x": -1, "y": -1 },
-                { "x": -1, "y": 1 },
-                { "x": 1, "y": -1 },
-                { "x": 1, "y": 1 }
-            ],
-            [ COLORS.checker.dark ]: [
-                { "x": 1, "y": -1 },
-                { "x": 1, "y": 1 },
-                { "x": -1, "y": -1 },
-                { "x": -1, "y": 1 }
-            ]
+            [ COLORS.checker.light ]: {
+                "fw": [
+                    { "x": -1, "y": -1 },
+                    { "x": -1, "y": 1 }
+                ],
+                "bw": [
+                    { "x": 1, "y": -1 },
+                    { "x": 1, "y": 1 }
+                ]
+            },
+            [ COLORS.checker.dark ]: {
+                "fw": [
+                    { "x": 1, "y": -1 },
+                    { "x": 1, "y": 1 }
+                ],
+                "bw": [
+                    { "x": -1, "y": -1 },
+                    { "x": -1, "y": 1 }
+                ]
+            }
         },
         showAvailableMoves(checker) {
-            var curPosition = checker.cell.getPosition();
-            var checkerMoves = this.moves[checker.color];
-            // var lCell = self.getCell(curPosition.x + checkerMoves.left.x, curPosition.y + checkerMoves.left.y);
-            // var rCell = self.getCell(curPosition.x + checkerMoves.right.x, curPosition.y + checkerMoves.right.y);
-            checkerMoves.forEach((v, i) => {
-                // console.log(v);
-                var cell = self.getCell(curPosition.x + v.x, curPosition.y + v.y);
-                if( cell != undefined) {
-                    if(i < 2) {
-                        if( !cell.hasChecker() ) {
-                            cell.highlight();
-                        } else {
-                            console.log('has other');
-                        }
-                    } else {
-                        if( cell.hasChecker() && checker.color !== cell.checker.color) {
-                            console.log('has enemy');
-                        }
-                    }
+            var availableMoves = this.getAvailableMoves(checker);
+            availableMoves.forEach((cell) => {
+                if( cell ) {
+                    cell.highlight();
                 }
-                // console.log(cell);
             });
-            // console.log(lCell, rCell);
         },
+        getAvailableMoves(checker) {
+            var moves = [];
+            var checkerMoves = this.moves[ checker.color ];
+            moves.push(
+                this.getAvailableCell( checker, checkerMoves.fw[LEFT] ),
+                this.getAvailableCell( checker, checkerMoves.fw[RIGHT] ),
+                this.getAvailableCell( checker, checkerMoves.bw[LEFT], true),
+                this.getAvailableCell( checker, checkerMoves.bw[LEFT], true)
+            );
+            return moves;
+        },
+        getAvailableCell(checker, direct, isBack=false) {
+            var curPos = checker.cell.getPosition();
+            var cell = self.getCell(curPos.x + direct.x, curPos.y + direct.y);
+            var cellHasChecker = cell && cell.hasChecker();
+            if(!cellHasChecker && !isBack) {
+                return cell;
+            }
+            if(cellHasChecker && checker.color !== cell.checker.color) {
+                return this.cellAfterEating(cell.getPosition(), direct);
+            }
 
-
+            return null;
+        },
+        cellAfterEating(enemyPosition, dirPosition) {
+            var cell = self.getCell(enemyPosition.x + dirPosition.x, enemyPosition.y + dirPosition.y);
+            return cell && !cell.hasChecker()? cell : null;
+        }
     }
 
     function Cell(x, y) {
@@ -135,7 +154,7 @@ function Checkers() {
 
     this.getCell = (x, y) => {
         var cell = document.getElementById('cell_' + x + '_' + y);
-        return cell? cell.obj : undefined;
+        return cell? cell.obj : null;
     }
 
     function checkerClickHandle(e) {

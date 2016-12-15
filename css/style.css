@@ -18,6 +18,7 @@
     background-color: #fff;
 }
 .cell.highlight {
+    cursor: pointer;
     background-color: #cfd22d;
     opacity: 0.5;
 }
