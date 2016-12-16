@@ -1,4 +1,4 @@
-#checkers > div {
+body > div, #checkers > div {
     float: left;
 }
 #checkers {
@@ -53,4 +53,18 @@
 .checker__blue:after {
     background-color: blue;
     border: 5px solid #05039e;
+}
+#info {
+    padding: 20px 50px;
+    font-size: 25px;
+}
+#info > div {
+    margin-bottom: 20px;
+}
+#current_turn_color {
+    display: inline-block;
+    width: 40px;
+    height: 30px;
+    vertical-align: middle;
+    border: 1px solid #ccc;
 }

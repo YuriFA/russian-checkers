@@ -1,5 +1,9 @@
 const N = 8;
 const WH = 100 / N;
+const BG_COLORS = {
+    "red": "#c70000",
+    "blue": "#05039e"
+};
 const COLORS = {
     "checker": {
         "light": "red",
@@ -10,21 +14,31 @@ const COLORS = {
         "false": "white"
     }
 };
-const LEFT = 0;
-const RIGHT = 1;
 
 function Checkers() {
     var self = this;
 
     this.N = N;
     this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ];
+    this.CELL_AFTER_EATING = "cell_after_eating";
+    this.CELL_FREE = "cell_free";
 
     this.currentTurn = this.TURNS[0]; // 0 - light, 1 - dark
+    this.turnsCount = 0;
     this.currentChecker = null;
 
     this.boardDOM = document.getElementById('checkers');
+    this.turnsCountDOM = document.getElementById('turns_count');
+    this.turnColorDOM = document.getElementById('current_turn_color');
+
+    this.getCell = (x, y) => {
+        var cell = document.getElementById('cell_' + x + '_' + y);
+        return cell? cell.obj : null;
+    }
 
     var gameController = {
+        LEFT: 0,
+        RIGHT: 1,
         moves: {
             [ COLORS.checker.light ]: {
                 "fw": [
@@ -50,9 +64,8 @@ function Checkers() {
         showAvailableMoves(checker) {
             var availableMoves = this.getAvailableMoves(checker);
             availableMoves.forEach((move) => {
-                if( move ) {
-
-                    cell.highlight();
+                if( move && move.cell) {
+                    move.cell.highlight();
                 }
             });
         },
@@ -60,30 +73,32 @@ function Checkers() {
             var moves = [];
             var checkerMoves = this.moves[ checker.color ];
             moves.push(
-                this.getAvailableCell( checker, checkerMoves.fw[LEFT] ),
-                this.getAvailableCell( checker, checkerMoves.fw[RIGHT] ),
-                this.getAvailableCell( checker, checkerMoves.bw[LEFT], true),
-                this.getAvailableCell( checker, checkerMoves.bw[LEFT], true)
+                this.getAvailableCell( checker, checkerMoves.fw[ this.LEFT ] ),
+                this.getAvailableCell( checker, checkerMoves.fw[ this.RIGHT ] ),
+                this.getAvailableCell( checker, checkerMoves.bw[ this.LEFT ], true),
+                this.getAvailableCell( checker, checkerMoves.bw[ this.RIGHT ], true)
             );
-            if(moves.some((mv) => mv.type === "enemy")) {
-                moves.filter((mv) => )
+            console.log(moves);
+            var enemyEating = (mv) => mv && mv.cell && mv.type === self.CELL_AFTER_EATING;
+            if(moves.some(enemyEating)) {
+                moves = moves.filter(enemyEating);
             }
             return moves;
         },
-        getAvailableCell(checker, direct, isBack=false) {
+        getAvailableCell(checker, direction, isBack=false) {
             var curPos = checker.cell.getPosition();
-            var cell = self.getCell(curPos.x + direct.x, curPos.y + direct.y);
+            var cell = self.getCell(curPos.x + direction.x, curPos.y + direction.y);
             var cellHasChecker = cell && cell.hasChecker();
             if(!cellHasChecker && !isBack) {
                 return {
-                    "type": "free",
+                    "type": self.CELL_FREE,
                     "cell": cell
                 };
             }
             if(cellHasChecker && checker.color !== cell.checker.color) {
                 return {
-                    "type": "enemy",
-                    "cell": this.cellAfterEating(cell.getPosition(), direct)
+                    "type": self.CELL_AFTER_EATING,
+                    "cell": this.cellAfterEating(cell.getPosition(), direction)
                 }
             }
 
@@ -91,7 +106,30 @@ function Checkers() {
         },
         cellAfterEating(enemyPosition, dirPosition) {
             var cell = self.getCell(enemyPosition.x + dirPosition.x, enemyPosition.y + dirPosition.y);
+            console.log(cell);
             return cell && !cell.hasChecker()? cell : null;
+        },
+        setNexnTurn() {
+            self.turnsCount++;
+            self.currentTurn = self.TURNS[ self.turnsCount % 2 ];
+        },
+        eatIfItPossible(curCell, nextCell) {
+            console.log(curCell.x - nextCell.x, Math.abs(curCell.x - nextCell.x), Math.abs(curCell.x - nextCell.x) === 2)
+            if( Math.abs(curCell.x - nextCell.x) === 2 ) {
+                var direction = this.calcDirectionOfMove(curCell, nextCell);
+                var enemyCell = self.getCell(curCell.x + direction.x, curCell.y + direction.y);
+                console.log(enemyCell);
+                enemyCell.checker.belongsTo(null);
+                console.log(enemyCell.checker);
+                enemyCell.removeChecker();
+            }
+            return null;
+        },
+        calcDirectionOfMove(curCell, nextCell) {
+            return {
+                "x": ( nextCell.x - curCell.x ) / 2,
+                "y": ( nextCell.y - curCell.y ) / 2
+            };
         }
     }
 
@@ -111,12 +149,12 @@ function Checkers() {
             cell.className = "cell cell__" + self.color;
             cell.style.width = WH + '%';
             cell.style.height = WH + '%';
+            cell.addEventListener('click', cellClickHandle);
             if( !cell.hasOwnProperty('obj') ) {
                 cell.obj = self;
             }
             return cell;
         })();
-
 
         //public methods
         this.getPosition = () => {
@@ -127,9 +165,13 @@ function Checkers() {
         };
         this.containChecker = (checker) => self.checker = checker;
         this.hasChecker = () => self.checker != null;
-        this.removeChecker = () => self.checker = null;
+        this.removeChecker = () => {
+            self.cellDOM.removeChild(self.checker.checkerDOM);
+            self.checker = null;
+        }
         this.highlight = () => self.cellDOM.classList.toggle("highlight");
         this.unhighlight = () => self.cellDOM.classList.remove("highlight");
+        this.isHighlighted = () => self.cellDOM.classList.contains("highlight");
     }
 
     function Checker(x, y) {
@@ -153,35 +195,61 @@ function Checkers() {
         this.isBlue = () => self.color = COLORS.checker.dark;
         this.belongsTo = (cell) => {
             self.cell = cell;
-            cell.cellDOM.appendChild(self.checkerDOM);
-        }
+            if( cell ) {
+                cell.cellDOM.appendChild(self.checkerDOM);
+            }
+        };
         this.canTurn = (currentTurn) => self.color == currentTurn;
         this.isMovePossible = (currentChecker, currentTurn) => {
-            return self.canTurn && ( currentChecker == null ||  currentChecker != self);
+            return self.canTurn(currentTurn) && ( currentChecker == null ||  currentChecker != self);
+        };
+        this.moveTo = (cell) => {
+            gameController.eatIfItPossible(self.cell, cell);
+            self.cell.removeChecker();
+            self.belongsTo(cell);
+            cell.containChecker(self);
         }
 
     }
 
-    this.getCell = (x, y) => {
-        var cell = document.getElementById('cell_' + x + '_' + y);
-        return cell? cell.obj : null;
+    function deactivateCheckers() {
+        var activeCheckers = document.getElementsByClassName("checker active");
+        if( activeCheckers.length !== 0 ) {
+            Object.keys(activeCheckers).map((i) => activeCheckers[i].classList.remove("active"));
+            var highlights = document.querySelectorAll(".cell.highlight");
+            Object.keys(highlights).map((i) => highlights[i].obj.unhighlight());
+        }
     }
 
     function checkerClickHandle(e) {
         var checker = this.obj;
+        deactivateCheckers();
         if(checker !== undefined && checker.isMovePossible(self.currentChecker, self.currentTurn)) {
-            var actives = document.querySelector(".checker.active");
-            if(actives !== null) {
-                actives.classList.remove("active");
-                var hl = document.querySelectorAll(".cell.highlight");
-                Object.keys(hl).map((v) => hl[v].obj.unhighlight());
-            }
             this.classList.toggle("active");
             gameController.showAvailableMoves(checker);
-
+            self.currentChecker = checker;
+        } else {
+            self.currentChecker = null;
         }
+
+        return false;
     }
 
+    function cellClickHandle(e) {
+        var cell = this.obj;
+        if( self.currentChecker && cell.isHighlighted() ) {
+            console.log('can move to this cell');
+            self.currentChecker.moveTo(cell);
+            deactivateCheckers();
+            gameController.setNexnTurn();
+            updateInfo();
+        } else {
+            console.log('move to this cell is impossible');
+        }
+        return false;
+    }
+
+    //drawing board
     function drawBoard() {
         for (var i = 1; i <= self.N; i++) {
             for (var j = 1; j <= self.N; j++) {
@@ -200,13 +268,21 @@ function Checkers() {
         }
     }
 
+    function updateInfo() {
+        self.turnsCountDOM.textContent = self.turnsCount;
+        self.turnColorDOM.style.backgroundColor = BG_COLORS[ self.currentTurn ];
+    }
 
     drawBoard();
+    updateInfo();
+
+    //testing functions
     function testChecker(checker, cell) {
         var testChecker = new Checker(checker.x, checker.y);
         var testCell = document.getElementById('cell_' + cell.x + '_' + cell.y).obj;
         testChecker.belongsTo(testCell);
         testCell.containChecker(testChecker);
+        console.log(testChecker, testCell);
     }
 
     testChecker({"x": 3,"y": 2}, {"x": 5, "y": 5});
