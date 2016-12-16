@@ -49,8 +49,9 @@ function Checkers() {
         },
         showAvailableMoves(checker) {
             var availableMoves = this.getAvailableMoves(checker);
-            availableMoves.forEach((cell) => {
-                if( cell ) {
+            availableMoves.forEach((move) => {
+                if( move ) {
+
                     cell.highlight();
                 }
             });
@@ -64,6 +65,9 @@ function Checkers() {
                 this.getAvailableCell( checker, checkerMoves.bw[LEFT], true),
                 this.getAvailableCell( checker, checkerMoves.bw[LEFT], true)
             );
+            if(moves.some((mv) => mv.type === "enemy")) {
+                moves.filter((mv) => )
+            }
             return moves;
         },
         getAvailableCell(checker, direct, isBack=false) {
@@ -71,10 +75,16 @@ function Checkers() {
             var cell = self.getCell(curPos.x + direct.x, curPos.y + direct.y);
             var cellHasChecker = cell && cell.hasChecker();
             if(!cellHasChecker && !isBack) {
-                return cell;
+                return {
+                    "type": "free",
+                    "cell": cell
+                };
             }
             if(cellHasChecker && checker.color !== cell.checker.color) {
-                return this.cellAfterEating(cell.getPosition(), direct);
+                return {
+                    "type": "enemy",
+                    "cell": this.cellAfterEating(cell.getPosition(), direct)
+                }
             }
 
             return null;
@@ -192,11 +202,15 @@ function Checkers() {
 
 
     drawBoard();
+    function testChecker(checker, cell) {
+        var testChecker = new Checker(checker.x, checker.y);
+        var testCell = document.getElementById('cell_' + cell.x + '_' + cell.y).obj;
+        testChecker.belongsTo(testCell);
+        testCell.containChecker(testChecker);
+    }
 
-    var testChecker = new Checker(3, 2);
-    var testCell = document.getElementById('cell_5_5').obj;
-    testChecker.belongsTo(testCell);
-    testCell.containChecker(testChecker);
+    testChecker({"x": 3,"y": 2}, {"x": 5, "y": 5});
+    testChecker({"x": 3,"y": 4}, {"x": 5, "y": 3});
 }
 
 
