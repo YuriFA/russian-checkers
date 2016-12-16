@@ -1,5 +1,7 @@
 const N = 8;
 const WH = 100 / N;
+const TOP_UP = 4;
+const BOTTOM_FROM = N - 3;
 const BG_COLORS = {
     "red": "#c70000",
     "blue": "#05039e"
@@ -27,7 +29,7 @@ function Checkers() {
     this.turnsCount = 0;
     this.currentChecker = null;
 
-    this.boardDOM = document.getElementById('checkers');
+    this.boardDOM = document.getElementById('board');
     this.turnsCountDOM = document.getElementById('turns_count');
     this.turnColorDOM = document.getElementById('current_turn_color');
 
@@ -61,35 +63,39 @@ function Checkers() {
                 ]
             }
         },
-        showAvailableMoves(checker) {
-            var availableMoves = this.getAvailableMoves(checker);
-            availableMoves.forEach((move) => {
-                if( move && move.cell) {
-                    move.cell.highlight();
-                }
-            });
+        showAvailableMoves(moves) {
+            if( moves ) {
+                moves.forEach((move) => {
+                    if( move && move.cell) {
+                        move.cell.highlight();
+                    }
+                });
+            }
         },
-        getAvailableMoves(checker) {
+        getAvailableMoves(checker, isNotFirst=false) {
             var moves = [];
             var checkerMoves = this.moves[ checker.color ];
             moves.push(
-                this.getAvailableCell( checker, checkerMoves.fw[ this.LEFT ] ),
-                this.getAvailableCell( checker, checkerMoves.fw[ this.RIGHT ] ),
+                this.getAvailableCell( checker, checkerMoves.fw[ this.LEFT ], isNotFirst),
+                this.getAvailableCell( checker, checkerMoves.fw[ this.RIGHT ], isNotFirst),
                 this.getAvailableCell( checker, checkerMoves.bw[ this.LEFT ], true),
                 this.getAvailableCell( checker, checkerMoves.bw[ this.RIGHT ], true)
             );
-            console.log(moves);
-            var enemyEating = (mv) => mv && mv.cell && mv.type === self.CELL_AFTER_EATING;
-            if(moves.some(enemyEating)) {
-                moves = moves.filter(enemyEating);
+            // console.log(moves);
+            var enemyEatingFilter = (mv) => mv && mv.cell && mv.type === self.CELL_AFTER_EATING;
+            var freeMoveFilter = (mv) => mv && mv.cell && mv.type === self.CELL_FREE;
+            if( moves.some(enemyEatingFilter) ) {
+                moves = moves.filter(enemyEatingFilter);
+            } else {
+                moves = moves.filter(freeMoveFilter);
             }
-            return moves;
+            return moves.length? moves : null;
         },
-        getAvailableCell(checker, direction, isBack=false) {
+        getAvailableCell(checker, direction, onlyEat=false) {
             var curPos = checker.cell.getPosition();
             var cell = self.getCell(curPos.x + direction.x, curPos.y + direction.y);
             var cellHasChecker = cell && cell.hasChecker();
-            if(!cellHasChecker && !isBack) {
+            if(!cellHasChecker && !onlyEat) {
                 return {
                     "type": self.CELL_FREE,
                     "cell": cell
@@ -106,30 +112,28 @@ function Checkers() {
         },
         cellAfterEating(enemyPosition, dirPosition) {
             var cell = self.getCell(enemyPosition.x + dirPosition.x, enemyPosition.y + dirPosition.y);
-            console.log(cell);
             return cell && !cell.hasChecker()? cell : null;
         },
-        setNexnTurn() {
-            self.turnsCount++;
-            self.currentTurn = self.TURNS[ self.turnsCount % 2 ];
-        },
         eatIfItPossible(curCell, nextCell) {
-            console.log(curCell.x - nextCell.x, Math.abs(curCell.x - nextCell.x), Math.abs(curCell.x - nextCell.x) === 2)
             if( Math.abs(curCell.x - nextCell.x) === 2 ) {
                 var direction = this.calcDirectionOfMove(curCell, nextCell);
                 var enemyCell = self.getCell(curCell.x + direction.x, curCell.y + direction.y);
-                console.log(enemyCell);
                 enemyCell.checker.belongsTo(null);
-                console.log(enemyCell.checker);
                 enemyCell.removeChecker();
+
+                return true;
             }
-            return null;
+            return false;
         },
         calcDirectionOfMove(curCell, nextCell) {
             return {
                 "x": ( nextCell.x - curCell.x ) / 2,
                 "y": ( nextCell.y - curCell.y ) / 2
             };
+        },
+        setNexnTurn() {
+            self.turnsCount++;
+            self.currentTurn = self.TURNS[ self.turnsCount % 2 ];
         }
     }
 
@@ -174,10 +178,10 @@ function Checkers() {
         this.isHighlighted = () => self.cellDOM.classList.contains("highlight");
     }
 
-    function Checker(x, y) {
+    function Checker(color) {
         var self = this;
 
-        this.color = x < 4? COLORS.checker.dark : COLORS.checker.light;
+        this.color = color;
         this.cell = null;
 
         this.checkerDOM = (() => {
@@ -191,8 +195,7 @@ function Checkers() {
         })();
 
         //public methods
-        this.isRed = () => self.color = COLORS.checker.light;
-        this.isBlue = () => self.color = COLORS.checker.dark;
+        this.activate = () => self.checkerDOM.classList.toggle("active");
         this.belongsTo = (cell) => {
             self.cell = cell;
             if( cell ) {
@@ -204,17 +207,18 @@ function Checkers() {
             return self.canTurn(currentTurn) && ( currentChecker == null ||  currentChecker != self);
         };
         this.moveTo = (cell) => {
-            gameController.eatIfItPossible(self.cell, cell);
+            var isEat = gameController.eatIfItPossible(self.cell, cell);
             self.cell.removeChecker();
             self.belongsTo(cell);
             cell.containChecker(self);
+            return isEat;
         }
 
     }
 
     function deactivateCheckers() {
         var activeCheckers = document.getElementsByClassName("checker active");
-        if( activeCheckers.length !== 0 ) {
+        if( activeCheckers.length ) {
             Object.keys(activeCheckers).map((i) => activeCheckers[i].classList.remove("active"));
             var highlights = document.querySelectorAll(".cell.highlight");
             Object.keys(highlights).map((i) => highlights[i].obj.unhighlight());
@@ -225,8 +229,9 @@ function Checkers() {
         var checker = this.obj;
         deactivateCheckers();
         if(checker !== undefined && checker.isMovePossible(self.currentChecker, self.currentTurn)) {
-            this.classList.toggle("active");
-            gameController.showAvailableMoves(checker);
+            var availableMoves = gameController.getAvailableMoves(checker);
+            checker.activate();
+            gameController.showAvailableMoves(availableMoves);
             self.currentChecker = checker;
         } else {
             self.currentChecker = null;
@@ -238,14 +243,21 @@ function Checkers() {
     function cellClickHandle(e) {
         var cell = this.obj;
         if( self.currentChecker && cell.isHighlighted() ) {
-            console.log('can move to this cell');
-            self.currentChecker.moveTo(cell);
+            // console.log('can move to this cell');
+            var wasEaten = self.currentChecker.moveTo(cell);
+            var eatMoreMoves = gameController.getAvailableMoves(self.currentChecker, true);
             deactivateCheckers();
-            gameController.setNexnTurn();
+            if( wasEaten && eatMoreMoves) {
+                self.currentChecker.activate();
+                gameController.showAvailableMoves(eatMoreMoves);
+            } else {
+                gameController.setNexnTurn();
+            }
             updateInfo();
         } else {
-            console.log('move to this cell is impossible');
+            // console.log('move to this cell is impossible');
         }
+
         return false;
     }
 
@@ -261,10 +273,11 @@ function Checkers() {
     }
 
     function drawChecker(cell) {
-        if (cell.y % 2 === cell.x % 2 && (cell.x < 4 || cell.x > 5)) {
-          var checker = new Checker(cell.x, cell.y);
-          checker.belongsTo(cell);
-          cell.containChecker(checker);
+        if (cell.y % 2 === cell.x % 2 && (cell.x < TOP_UP || cell.x > BOTTOM_FROM)) {
+            var checkerColor = cell.x < TOP_UP? COLORS.checker.dark : COLORS.checker.light;
+            var checker = new Checker(checkerColor);
+            checker.belongsTo(cell);
+            cell.containChecker(checker);
         }
     }
 
@@ -277,16 +290,25 @@ function Checkers() {
     updateInfo();
 
     //testing functions
-    function testChecker(checker, cell) {
-        var testChecker = new Checker(checker.x, checker.y);
-        var testCell = document.getElementById('cell_' + cell.x + '_' + cell.y).obj;
-        testChecker.belongsTo(testCell);
-        testCell.containChecker(testChecker);
-        console.log(testChecker, testCell);
+    function testChecker(checkerColor, cells) {
+        cells.forEach((cell) => {
+            var testChecker = new Checker(checkerColor);
+            var testCell = document.getElementById('cell_' + cell.x + '_' + cell.y).obj;
+            testChecker.belongsTo(testCell);
+            testCell.containChecker(testChecker);
+        })
     }
 
-    testChecker({"x": 3,"y": 2}, {"x": 5, "y": 5});
-    testChecker({"x": 3,"y": 4}, {"x": 5, "y": 3});
+    function deleteChecker(x, y) {
+        var cell = document.getElementById('cell_' + x + '_' + y).obj;
+        if ( !cell  || !cell.checker ) return false;
+        cell.removeChecker();
+        return true;
+    }
+
+    testChecker(COLORS.checker.dark, [{"x": 5, "y": 5}, {"x": 5, "y": 3}]);
+    deleteChecker(6, 4);
+    deleteChecker(6, 6);
 }
 
 

@@ -1,7 +1,11 @@
-body > div, #checkers > div {
+#game > div, #board > div {
     float: left;
 }
-#checkers {
+#game {
+    margin: 0 auto;
+    width: 50%;
+}
+#board {
     width: 500px;
     height: 500px;
     border: 5px solid #999;
