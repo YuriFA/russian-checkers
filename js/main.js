@@ -306,9 +306,9 @@ function Checkers() {
         return true;
     }
 
-    testChecker(COLORS.checker.dark, [{"x": 5, "y": 5}, {"x": 5, "y": 3}]);
-    deleteChecker(6, 4);
-    deleteChecker(6, 6);
+    // testChecker(COLORS.checker.dark, [{"x": 5, "y": 5}, {"x": 5, "y": 3}]);
+    // deleteChecker(6, 4);
+    // deleteChecker(6, 6);
 }
 
 
