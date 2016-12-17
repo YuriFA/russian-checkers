@@ -1,0 +1,70 @@
+@import vars
+
+#game > div,
+#board > div
+    float: left
+
+#game
+    margin: 0 auto
+    width: 50%
+
+#board
+    width: 700px
+    height: 700px
+    border: 5px solid #999
+
+.cell
+    float: left
+    width: 12.5%
+    height: 12.5%
+
+.cell__black
+    background-color: #ccc
+
+.cell__white
+    background-color: #fff
+
+.cell.highlight
+    cursor: pointer
+    background-color: #cfd22d
+    opacity: 0.5
+
+.checker
+    height: 100%
+    cursor: pointer
+    &:after
+        content: ''
+        border-radius: 50%
+        width: 80%
+        height: 80%
+        position: relative
+        display: block
+        left: 10%
+        top: 10%
+        box-sizing: border-box
+        transition: all .3s ease-out
+
+.checker.active:after
+    box-shadow: 2px 3px 5px 3px rgba(0, 0, 0, 0.5)
+    border: 10px solid rgba(0,0,0,0.7)
+
+.checker__red:after
+    background-color: $red
+    border: 10px solid $dark_red
+
+.checker__blue:after
+    background-color: $blue
+    border: 10px solid $dark_blue
+
+#info
+    padding: 20px 50px
+    font-size: 25px
+    >div
+        margin-bottom: 20px
+
+#current_turn_color
+    display: inline-block
+    width: 40px
+    height: 30px
+    vertical-align: middle
+    border: 1px solid #ccc
