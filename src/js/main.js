@@ -17,6 +17,95 @@ const COLORS = {
   }
 }
 
+class Cell {
+  constructor (x, y, clickHandle) {
+    this.x = x
+    this.y = y
+    this.id = `cell_${x}_${y}`
+    this.color = COLORS.cell[ x % 2 === y % 2 ]
+    this.checker = null
+    this.cellDOM = (() => {
+      const cell = document.createElement('div')
+      cell.id = this.id
+      cell.className = `cell cell__${this.color}`
+      cell.style.width = `${WH}%`
+      cell.style.height = `${WH}%`
+      cell.onclick = clickHandle
+      if (!cell.hasOwnProperty('obj')) {
+        cell.obj = this
+      }
+      return cell
+    })()
+  }
+
+  // public methods
+  getPosition () {
+    return {
+      x: this.x,
+      y: this.y
+    }
+  }
+  containChecker (checker) {
+    this.checker = checker
+    return null
+  }
+  hasChecker () {
+    this.checker != null
+  }
+  removeChecker () {
+    this.cellDOM.removeChild(this.checker.checkerDOM)
+    this.checker = null
+  }
+  highlight () {
+    this.cellDOM.classList.toggle('highlight')
+  }
+  unhighlight () {
+    this.cellDOM.classList.remove('highlight')
+  }
+  isHighlighted () {
+    this.cellDOM.classList.contains('highlight')
+  }
+}
+
+class Checker {
+  constructor (color, clickHandle) {
+    this.color = color
+    this.cell = null
+
+    this.checkerDOM = (() => {
+      const checker = document.createElement('div')
+      checker.className = `checker checker__${this.color}`
+      if (!checker.hasOwnProperty('obj')) {
+        checker.obj = this
+      }
+      checker.addEventListener('click', clickHandle)
+      return checker
+    })()
+  }
+
+  // public methods
+  activate () {
+    this.checkerDOM.classList.toggle('active')
+  }
+  belongsTo (cell) {
+    this.cell = cell
+    if (cell) {
+      cell.cellDOM.appendChild(this.checkerDOM)
+    }
+  }
+  canTurn (currentTurn) {
+    this.color === currentTurn
+  }
+  isMovePossible (currentChecker, currentTurn) {
+    return this.canTurn(currentTurn) && (currentChecker == null || currentChecker !== this)
+  }
+  moveTo (cell) {
+    this.cell.removeChecker()
+    this.belongsTo(cell)
+    cell.containChecker(this)
+  }
+}
+
 function Checkers () {
   let self = this
 
@@ -62,6 +151,21 @@ function Checkers () {
           { x: -1, y: -1 },
           { x: -1, y: 1 }
         ]
+      }
+    },
+    makeMove (cell) {
+      if (self.currentChecker && cell.isHighlighted()) {
+        // console.log('can move to this cell')
+        const wasEaten = this.eatIfItPossible(self.currentChecker.cell, cell)
+        const mustEat = this.getAvailableMoves(self.currentChecker, true)
+        self.currentChecker.moveTo(cell)
+        deactivateCheckers()
+        if (wasEaten && mustEat) {
+          self.currentChecker.activate()
+          this.showMoves(mustEat)
+        } else {
+          this.setNexnTurn()
+        }
       }
     },
     showMoves (moves) {
@@ -121,7 +225,6 @@ function Checkers () {
         const enemyCell = self.getCell(curCell.x + direction.x, curCell.y + direction.y)
         enemyCell.checker.belongsTo(null)
         enemyCell.removeChecker()
-
         return true
       }
       return false
@@ -138,84 +241,6 @@ function Checkers () {
     setNexnTurn () {
       self.turnsCount++
       self.currentTurn = self.TURNS[ self.turnsCount % 2 ]
-    }
-  }
-
-  function Cell (x, y) {
-    let self = this
-
-    this.x = x
-    this.y = y
-    this.id = `cell_${x}_${y}`
-    this.color = COLORS.cell[ x % 2 === y % 2 ]
-
-    this.checker = null
-
-    this.cellDOM = (() => {
-      const cell = document.createElement('div')
-      cell.id = self.id
-      cell.className = `cell cell__${self.color}`
-      cell.style.width = `${WH}%`
-      cell.style.height = `${WH}%`
-      cell.addEventListener('click', cellClickHandle)
-      if (!cell.hasOwnProperty('obj')) {
-        cell.obj = self
-      }
-      return cell
-    })()
-
-    // public methods
-    this.getPosition = () => {
-      return {
-        x: self.x,
-        y: self.y
-      }
-    }
-    this.containChecker = (checker) => (self.checker = checker)
-    this.hasChecker = () => self.checker != null
-    this.removeChecker = () => {
-      self.cellDOM.removeChild(self.checker.checkerDOM)
-      self.checker = null
-    }
-    this.highlight = () => self.cellDOM.classList.toggle('highlight')
-    this.unhighlight = () => self.cellDOM.classList.remove('highlight')
-    this.isHighlighted = () => self.cellDOM.classList.contains('highlight')
-  }
-
-  function Checker (color) {
-    let self = this
-
-    this.color = color
-    this.cell = null
-
-    this.checkerDOM = (() => {
-      const checker = document.createElement('div')
-      checker.className = `checker checker__${self.color}`
-      if (!checker.hasOwnProperty('obj')) {
-        checker.obj = self
-      }
-      checker.addEventListener('click', checkerClickHandle)
-      return checker
-    })()
-
-    // public methods
-    this.activate = () => self.checkerDOM.classList.toggle('active')
-    this.belongsTo = (cell) => {
-      self.cell = cell
-      if (cell) {
-        cell.cellDOM.appendChild(self.checkerDOM)
-      }
-    }
-    this.canTurn = (currentTurn) => self.color === currentTurn
-    this.isMovePossible = (currentChecker, currentTurn) => {
-      return self.canTurn(currentTurn) && (currentChecker == null || currentChecker !== self)
-    }
-    this.moveTo = (cell) => {
-      const isEat = gameController.eatIfItPossible(self.cell, cell)
-      self.cell.removeChecker()
-      self.belongsTo(cell)
-      cell.containChecker(self)
-      return isEat
     }
   }
 
@@ -245,22 +270,8 @@ function Checkers () {
 
   function cellClickHandle (e) {
     const cell = this.obj
-    if (self.currentChecker && cell.isHighlighted()) {
-      // console.log('can move to this cell')
-      const wasEaten = self.currentChecker.moveTo(cell)
-      const mustEat = gameController.getAvailableMoves(self.currentChecker, true)
-      deactivateCheckers()
-      if (wasEaten && mustEat) {
-        self.currentChecker.activate()
-        gameController.showMoves(mustEat)
-      } else {
-        gameController.setNexnTurn()
-      }
-      updateInfo()
-    } else {
-      // console.log('move to this cell is impossible')
-    }
-
+    gameController.makeMove(cell)
+    updateInfo()
     return false
   }
 
@@ -268,7 +279,7 @@ function Checkers () {
   function drawBoard () {
     for (let i = 1; i <= self.N; i++) {
       for (let j = 1; j <= self.N; j++) {
-        const cell = new Cell(i, j)
+        const cell = new Cell(i, j, cellClickHandle)
         self.boardDOM.appendChild(cell.cellDOM)
         drawChecker(cell)
       }
@@ -278,7 +289,7 @@ function Checkers () {
   function drawChecker (cell) {
     if (cell.y % 2 === cell.x % 2 && (cell.x < TOP_UP || cell.x > BOTTOM_FROM)) {
       const checkerColor = cell.x < TOP_UP ? COLORS.checker.dark : COLORS.checker.light
-      const checker = new Checker(checkerColor)
+      const checker = new Checker(checkerColor, checkerClickHandle)
       checker.belongsTo(cell)
       cell.containChecker(checker)
     }
