@@ -345,9 +345,9 @@ function Checkers () {
   drawBoard()
   updateInfo()
 // TEST
-  testCheckers(COLORS.checker.dark, [{x: 5, y: 5}, {x: 5, y: 3}])
-  deleteChecker(6, 4)
-  deleteChecker(6, 6)
+  // testCheckers(COLORS.checker.dark, [{x: 5, y: 5}, {x: 5, y: 3}])
+  // deleteChecker(6, 4)
+  // deleteChecker(6, 6)
 // MARK
   gameController.markAvailableCheckers(self.currentTurn)
 }
