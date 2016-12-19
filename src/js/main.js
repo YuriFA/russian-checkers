@@ -22,8 +22,8 @@ function Checkers () {
 
   this.N = N
   this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ]
-  this.CELL_AFTER_EATING = 'cell_after_eating'
-  this.CELL_FREE = 'cell_free'
+  this.EAT_MOVE = 'eat'
+  this.FREE_MOVE = 'free'
 
   // 0 - light, 1 - dark
   this.currentTurn = this.TURNS[0]
@@ -37,6 +37,12 @@ function Checkers () {
   this.getCell = (x, y) => {
     const cell = document.getElementById(`cell_${x}_${y}`)
     return cell ? cell.obj : null
+  }
+
+  this.getCheckers = (color, marked = false) => {
+    let checkers = document.querySelectorAll(`.checker.checker__${color}${marked ? '.marked' : ''}`)
+    checkers = Object.keys(checkers).map((i) => (checkers[i] = checkers[i].obj))
+    return checkers
   }
 
   var gameController = {
@@ -73,24 +79,29 @@ function Checkers () {
         })
       }
     },
-    getAvailableMoves (checker, isNotFirst = false) {
+    getAvailableMoves (checker, onlyEat = false) {
       const checkerMoves = this.moves[ checker.color ]
-      const enemyEatingFilter = (mv) => mv && mv.cell && mv.type === self.CELL_AFTER_EATING
-      const freeMoveFilter = (mv) => mv && mv.cell && mv.type === self.CELL_FREE
+      const enemyEatingFilter = (mv) => mv && mv.cell && mv.type === self.EAT_MOVE
+      const freeMoveFilter = (mv) => mv && mv.cell && mv.type === self.FREE_MOVE
       let moves = []
       moves.push(
-        this.getAvailableCell(checker, checkerMoves.fw[ this.LEFT ], isNotFirst),
-        this.getAvailableCell(checker, checkerMoves.fw[ this.RIGHT ], isNotFirst),
+        this.getAvailableCell(checker, checkerMoves.fw[ this.LEFT ], onlyEat),
+        this.getAvailableCell(checker, checkerMoves.fw[ this.RIGHT ], onlyEat),
         this.getAvailableCell(checker, checkerMoves.bw[ this.LEFT ], true),
         this.getAvailableCell(checker, checkerMoves.bw[ this.RIGHT ], true)
       )
-      // console.log(moves)
       if (moves.some(enemyEatingFilter)) {
-        moves = moves.filter(enemyEatingFilter)
+        moves = {
+          type: self.EAT_MOVE,
+          moves: moves.filter(enemyEatingFilter)
+        }
       } else {
-        moves = moves.filter(freeMoveFilter)
+        moves = {
+          type: self.FREE_MOVE,
+          moves: moves.filter(freeMoveFilter)
+        }
       }
-      return moves.length ? moves : null
+      return moves.moves.length ? moves : null
     },
     getAvailableCell (checker, direction, onlyEat = false) {
       const curPos = checker.cell.getPosition()
@@ -98,13 +109,13 @@ function Checkers () {
       const cellHasChecker = cell && cell.hasChecker()
       if (!cellHasChecker && !onlyEat) {
         return {
-          type: self.CELL_FREE,
+          type: self.FREE_MOVE,
           cell: cell
         }
       }
       if (cellHasChecker && checker.color !== cell.checker.color) {
         return {
-          type: self.CELL_AFTER_EATING,
+          type: self.EAT_MOVE,
           cell: this.cellAfterEating(cell.getPosition(), direction)
         }
       }
@@ -132,8 +143,28 @@ function Checkers () {
         y: (nextCell.y - curCell.y) / 2
       }
     },
-    haveSomeoneToEat () {
-
+    markAvailableCheckers (color) {
+      const checkers = self.getCheckers(color)
+      let eatMoves = false
+      let freeMoves = []
+      checkers.forEach((checker) => {
+        const moves = this.getAvailableMoves(checker)
+        if (moves) {
+          if (moves.type === self.EAT_MOVE) {
+            checker.mark()
+            eatMoves = true
+          } else {
+            freeMoves.push(checker)
+          }
+        }
+      })
+      if (!eatMoves && freeMoves.length) {
+        freeMoves.forEach((checker) => checker.mark())
+      }
+    },
+    unmarkCurrentCheckers (color) {
+      const checkers = self.getCheckers(color, true)
+      checkers.forEach((checker) => checker.unmark())
     },
     setNexnTurn () {
       self.turnsCount++
@@ -207,15 +238,16 @@ function Checkers () {
       }
     }
     this.canTurn = (currentTurn) => self.color === currentTurn
+    this.mark = () => self.checkerDOM.classList.toggle('marked')
+    this.unmark = () => self.checkerDOM.classList.remove('marked')
+    this.isMarked = () => self.checkerDOM.classList.contains('marked')
     this.isMovePossible = (currentChecker, currentTurn) => {
-      return self.canTurn(currentTurn) && (currentChecker == null || currentChecker !== self)
+      return self.canTurn(currentTurn) && self.isMarked() && (currentChecker == null || currentChecker !== self)
     }
     this.moveTo = (cell) => {
-      const isEat = gameController.eatIfItPossible(self.cell, cell)
       self.cell.removeChecker()
       self.belongsTo(cell)
       cell.containChecker(self)
-      return isEat
     }
   }
 
@@ -234,7 +266,7 @@ function Checkers () {
     if (checker !== undefined && checker.isMovePossible(self.currentChecker, self.currentTurn)) {
       const availableMoves = gameController.getAvailableMoves(checker)
       checker.activate()
-      gameController.showMoves(availableMoves)
+      gameController.showMoves(availableMoves.moves)
       self.currentChecker = checker
     } else {
       self.currentChecker = null
@@ -247,14 +279,17 @@ function Checkers () {
     const cell = this.obj
     if (self.currentChecker && cell.isHighlighted()) {
       // console.log('can move to this cell')
-      const wasEaten = self.currentChecker.moveTo(cell)
+      const wasEaten = gameController.eatIfItPossible(self.currentChecker.cell, cell)
+      self.currentChecker.moveTo(cell)
       const mustEat = gameController.getAvailableMoves(self.currentChecker, true)
       deactivateCheckers()
-      if (wasEaten && mustEat) {
+      if (wasEaten && mustEat && mustEat.moves) {
         self.currentChecker.activate()
-        gameController.showMoves(mustEat)
+        gameController.showMoves(mustEat.moves)
       } else {
+        gameController.unmarkCurrentCheckers(self.currentTurn)
         gameController.setNexnTurn()
+        gameController.markAvailableCheckers(self.currentTurn)
       }
       updateInfo()
     } else {
@@ -289,9 +324,6 @@ function Checkers () {
     self.turnColorDOM.style.backgroundColor = BG_COLORS[ self.currentTurn ]
   }
 
-  drawBoard()
-  updateInfo()
-
   // testing functions
   function testCheckers (checkerColor, cells) {
     cells.forEach((cell) => {
@@ -309,9 +341,15 @@ function Checkers () {
     return true
   }
 
+// init
+  drawBoard()
+  updateInfo()
+// TEST
   testCheckers(COLORS.checker.dark, [{x: 5, y: 5}, {x: 5, y: 3}])
   deleteChecker(6, 4)
   deleteChecker(6, 6)
+// MARK
+  gameController.markAvailableCheckers(self.currentTurn)
 }
 
 Checkers.init = function () {

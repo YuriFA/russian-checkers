@@ -32,6 +32,7 @@
 .checker
     height: 100%
     cursor: pointer
+    box-sizing: border-box
     &:after
         content: ''
         border-radius: 50%
@@ -55,6 +56,9 @@
 .checker__blue:after
     background-color: $blue
     border: 10px solid $dark_blue
+
+.checker.marked
+    box-shadow: inset 0 0 4px 4px #cfd22d;
 
 #info
     padding: 20px 50px
