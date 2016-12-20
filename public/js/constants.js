@@ -1,0 +1,1 @@
+"use strict";Object.defineProperty(exports,"__esModule",{value:!0});var N=exports.N=8,WH=exports.WH=100/N,TOP_UP=exports.TOP_UP=4,BOTTOM_FROM=exports.BOTTOM_FROM=N-3,BG_COLORS=exports.BG_COLORS={red:"#ff0000",blue:"#0000ff"},COLORS=exports.COLORS={checker:{light:"red",dark:"blue"},cell:{true:"black",false:"white"}};

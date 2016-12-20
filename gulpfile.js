@@ -5,6 +5,7 @@ const uglify = require('gulp-uglify')
 const minifyCss = require('gulp-csso')
 const gutil = require('gulp-util')
 const babel = require('gulp-babel')
+const browserify = require('gulp-browserify')
 
 gulp.task('style', function () {
   return gulp.src('src/sass/**/*.sass')
@@ -17,6 +18,7 @@ gulp.task('style', function () {
 
 gulp.task('watch', function () {
   gulp.watch('src/sass/**/*.sass', ['style'])
+  gulp.watch('src/js/**/*.js', ['build'])
 })
 
 gulp.task('build', ['style'], function () {
@@ -26,12 +28,10 @@ gulp.task('build', ['style'], function () {
     .pipe(gulp.dest('./public/css'))
 
   // js
-  gulp.src(['./src/js/**/*.js'])
-    .pipe(babel({
-      presets: ['es2015'],
-      compact: true
+  gulp.src(['./src/js/main.js'])
+    .pipe(browserify({
+      transform: ['babelify']
     }))
-    .pipe(uglify().on('error', gutil.log))
     .pipe(gulp.dest('./public/js'))
 
   // html
