@@ -1,7 +1,7 @@
 import {COLORS, WH} from './constants'
 
 class Cell {
-  constructor (x, y, clickHandle) {
+  constructor (x, y) {
     this.x = x
     this.y = y
     this.id = `cell_${x}_${y}`
@@ -14,7 +14,7 @@ class Cell {
       cell.className = `cell cell__${this.color}`
       cell.style.width = `${WH}%`
       cell.style.height = `${WH}%`
-      cell.addEventListener('click', clickHandle.bind(this))
+      // cell.addEventListener('click', clickHandle.bind(this))
       if (!cell.hasOwnProperty('obj')) {
         cell.obj = this
       }

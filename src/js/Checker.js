@@ -1,5 +1,5 @@
 class Checker {
-  constructor (color, clickHandle) {
+  constructor (color) {
     this.color = color
     this.cell = null
     this.checkerDOM = (() => {
@@ -8,7 +8,7 @@ class Checker {
       if (!checker.hasOwnProperty('obj')) {
         checker.obj = this
       }
-      checker.addEventListener('click', clickHandle.bind(this))
+      // checker.addEventListener('click', clickHandle.bind(this))
       return checker
     })()
   }
@@ -23,9 +23,6 @@ class Checker {
       cell.cellDOM.appendChild(this.checkerDOM)
     }
   }
-  canTurn (currentTurn) {
-    return this.color === currentTurn
-  }
   mark () {
     this.checkerDOM.classList.toggle('marked')
   }
@@ -35,8 +32,8 @@ class Checker {
   isMarked () {
     return this.checkerDOM.classList.contains('marked')
   }
-  isMovePossible (currentChecker, currentTurn) {
-    return this.canTurn(currentTurn) && this.isMarked() && (currentChecker == null || currentChecker !== this)
+  isMovePossible (currentChecker, currentTurnColor) {
+    return this.color === currentTurnColor && this.isMarked() && (currentChecker == null || currentChecker !== this)
   }
   moveTo (cell) {
     this.cell.removeChecker()

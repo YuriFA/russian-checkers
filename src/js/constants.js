@@ -16,3 +16,7 @@ export const COLORS = {
     false: 'white'
   }
 }
+export const MOVE_TYPE = {
+  FREE: 0,
+  EAT: 1
+}

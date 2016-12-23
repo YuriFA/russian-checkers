@@ -1,10 +1,7 @@
 const gulp = require('gulp')
 const sass = require('gulp-sass')
 const prefix = require('gulp-autoprefixer')
-const uglify = require('gulp-uglify')
 const minifyCss = require('gulp-csso')
-const gutil = require('gulp-util')
-const babel = require('gulp-babel')
 const browserify = require('gulp-browserify')
 
 gulp.task('style', function () {
@@ -13,7 +10,8 @@ gulp.task('style', function () {
     .pipe(prefix({
       browsers: ['last 15 versions']
     }))
-    .pipe(gulp.dest('src/css'))
+    .pipe(minifyCss())
+    .pipe(gulp.dest('./public/css'))
 })
 
 gulp.task('watch', function () {
