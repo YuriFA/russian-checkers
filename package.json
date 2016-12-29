@@ -11,7 +11,7 @@
     "presets": [
       "es2015"
     ],
-    "minified": true
+    "minified": false
   },
   "repository": {
     "type": "git",

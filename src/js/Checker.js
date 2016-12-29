@@ -1,14 +1,15 @@
-class Checker {
+export default class Checker {
   constructor (color) {
     this.color = color
     this.cell = null
+    this.marked = false
+    this.queen = false
     this.checkerDOM = (() => {
       const checker = document.createElement('div')
       checker.className = `checker checker__${this.color}`
       if (!checker.hasOwnProperty('obj')) {
         checker.obj = this
       }
-      // checker.addEventListener('click', clickHandle.bind(this))
       return checker
     })()
   }
@@ -24,13 +25,15 @@ class Checker {
     }
   }
   mark () {
+    this.marked = true
     this.checkerDOM.classList.toggle('marked')
   }
   unmark () {
+    this.marked = false
     this.checkerDOM.classList.remove('marked')
   }
   isMarked () {
-    return this.checkerDOM.classList.contains('marked')
+    return this.marked
   }
   isMovePossible (currentChecker, currentTurnColor) {
     return this.color === currentTurnColor && this.isMarked() && (currentChecker == null || currentChecker !== this)
@@ -40,6 +43,11 @@ class Checker {
     this.belongsTo(cell)
     cell.containChecker(this)
   }
+  makeQueen () {
+    this.queen = true
+    this.checkerDOM.classList.toggle('queen')
+  }
+  isQueen () {
+    this.queen
+  }
 }
-
-export default Checker

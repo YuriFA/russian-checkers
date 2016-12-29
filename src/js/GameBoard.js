@@ -1,35 +1,14 @@
-import { N, COLORS, TOP_UP, BOTTOM_FROM, MOVE_TYPE } from './constants'
+import { N, COLORS, TOP_UP, BOTTOM_FROM, MOVE_TYPE, LEFT, RIGHT, MOVE_MAP } from './constants'
+import GameState from './GameState.js'
 import Checker from './Checker'
 import Cell from './Cell'
 
-class Board {
+export default class GameBoard {
   constructor () {
     this.boardDOM = document.getElementById('board')
     this.draw()
-    this.LEFT = 0
-    this.RIGHT = 1
-    this.movesMap = {
-      [ COLORS.checker.light ]: {
-        fw: [
-          { x: -1, y: -1 },
-          { x: -1, y: 1 }
-        ],
-        bw: [
-          { x: 1, y: -1 },
-          { x: 1, y: 1 }
-        ]
-      },
-      [ COLORS.checker.dark ]: {
-        fw: [
-          { x: 1, y: -1 },
-          { x: 1, y: 1 }
-        ],
-        bw: [
-          { x: -1, y: -1 },
-          { x: -1, y: 1 }
-        ]
-      }
-    }
+    this.state = new GameState()
+    this.markAvailableCheckers(this.state.currentTurn)
   }
 
   // drawing board
@@ -37,6 +16,7 @@ class Board {
     for (let i = 1; i <= N; i++) {
       for (let j = 1; j <= N; j++) {
         const cell = new Cell(i, j)
+        cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this))
         this.boardDOM.appendChild(cell.cellDOM)
         this.drawChecker(cell)
       }
@@ -45,10 +25,56 @@ class Board {
 
   drawChecker (cell) {
     if (cell.y % 2 === cell.x % 2 && (cell.x < TOP_UP || cell.x > BOTTOM_FROM)) {
-      const checker = new Checker(cell.x < TOP_UP ? COLORS.checker.dark : COLORS.checker.light)
-      checker.belongsTo(cell)
-      cell.containChecker(checker)
+      this.createChecker(cell.x < TOP_UP ? COLORS.checker.dark : COLORS.checker.light, cell)
     }
+  }
+
+  createChecker (color, cell) {
+    const checker = new Checker(color)
+    checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this))
+    checker.belongsTo(cell)
+    cell.containChecker(checker)
+    return checker
+  }
+
+  checkerClickHandle (e) {
+    const checker = e.target.obj
+    this.deactivateCheckers()
+    if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
+      const availableMoves = this.getAvailableMoves(checker)
+      checker.activate()
+      this.showMoves(availableMoves.moves)
+      this.state.currentChecker = checker
+    } else {
+      this.state.currentChecker = null
+    }
+
+    return false
+  }
+
+  cellClickHandle (e) {
+    const cell = e.target.obj
+    if (cell instanceof Cell && this.state.currentChecker && cell.isHighlighted()) {
+      this.move(this.state.currentChecker, cell)
+    }
+    return false
+  }
+
+  move (checker, cell) {
+    const wasEaten = this.eatIfItPossible(checker.cell, cell)
+    checker.moveTo(cell)
+    const mustEat = this.getAvailableMoves(checker, true)
+    this.deactivateCheckers()
+    if (wasEaten && mustEat && mustEat.moves) {
+      checker.activate()
+      this.showMoves(mustEat.moves)
+    } else {
+      const checkers = this.getCheckers(this.state.currentTurn, true)
+      checkers.forEach((checker) => checker.unmark())
+      this.state.setNexnTurn()
+      this.markAvailableCheckers(this.state.currentTurn)
+    }
+    this.state.updateInfo()
   }
 
   getCell (x, y) {
@@ -73,15 +99,15 @@ class Board {
   }
 
   getAvailableMoves (checker, onlyEat = false) {
-    const checkerMoves = this.movesMap[ checker.color ]
+    const checkerMoves = MOVE_MAP[ checker.color ]
     const enemyEatingFilter = (mv) => mv && mv.cell && mv.type === MOVE_TYPE.EAT
     const freeMoveFilter = (mv) => mv && mv.cell && mv.type === MOVE_TYPE.FREE
     let moves = []
     moves.push(
-      this.getAvailableCell(checker, checkerMoves.fw[ this.LEFT ], onlyEat),
-      this.getAvailableCell(checker, checkerMoves.fw[ this.RIGHT ], onlyEat),
-      this.getAvailableCell(checker, checkerMoves.bw[ this.LEFT ], true),
-      this.getAvailableCell(checker, checkerMoves.bw[ this.RIGHT ], true)
+      this.getAvailableCell(checker, checkerMoves.fw[ LEFT ], onlyEat),
+      this.getAvailableCell(checker, checkerMoves.fw[ RIGHT ], onlyEat),
+      this.getAvailableCell(checker, checkerMoves.bw[ LEFT ], true),
+      this.getAvailableCell(checker, checkerMoves.bw[ RIGHT ], true)
     )
     if (moves.some(enemyEatingFilter)) {
       moves = {
@@ -128,7 +154,6 @@ class Board {
       const enemyCell = this.getCell(curCell.x + direction.x, curCell.y + direction.y)
       enemyCell.checker.belongsTo(null)
       enemyCell.removeChecker()
-
       return true
     }
     return false
@@ -170,5 +195,3 @@ class Board {
     }
   }
 }
-
-export default Board

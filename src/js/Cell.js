@@ -1,12 +1,11 @@
 import {COLORS, WH} from './constants'
 
-class Cell {
+export default class Cell {
   constructor (x, y) {
     this.x = x
     this.y = y
     this.id = `cell_${x}_${y}`
     this.color = COLORS.cell[ x % 2 === y % 2 ]
-
     this.checker = null
     this.cellDOM = (() => {
       const cell = document.createElement('div')
@@ -14,7 +13,6 @@ class Cell {
       cell.className = `cell cell__${this.color}`
       cell.style.width = `${WH}%`
       cell.style.height = `${WH}%`
-      // cell.addEventListener('click', clickHandle.bind(this))
       if (!cell.hasOwnProperty('obj')) {
         cell.obj = this
       }
@@ -51,5 +49,3 @@ class Cell {
     return this.cellDOM.classList.contains('highlight')
   }
 }
-
-export default Cell

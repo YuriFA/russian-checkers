@@ -9,9 +9,8 @@
     width: 50%
 
 #board
-    width: 500px
-    height: 500px
-    border: 5px solid #999
+    width: 700px
+    height: 700px
 
 .cell
     float: left
@@ -19,10 +18,10 @@
     height: 12.5%
 
 .cell__black
-    background-color: #ccc
+    background-color: #562700
 
 .cell__white
-    background-color: #fff
+    background-color: #D59A66
 
 .cell.highlight
     cursor: pointer
@@ -35,26 +34,23 @@
     &:after
         content: ''
         border-radius: 50%
-        width: 80%
-        height: 80%
+        width: 88%
+        height: 88%
         position: relative
         display: block
-        left: 10%
-        top: 10%
+        left: 6%
+        top: 6%
         box-sizing: border-box
         transition: all .3s ease-out
 
 .checker.active:after
-    box-shadow: 2px 3px 5px 3px rgba(0, 0, 0, 0.5)
-    border: 10px solid rgba(0,0,0,0.7)
+    box-shadow: 2px 3px 5px 5px rgba(0, 0, 0, 0.5)
 
 .checker__red:after
-    background-color: $red
-    border: 10px solid $dark_red
+    background-color: $light_checker
 
 .checker__blue:after
-    background-color: $blue
-    border: 10px solid $dark_blue
+    background-color: $dark_checker
 
 .checker.marked
     box-shadow: inset 0 0 4px 4px #cfd22d

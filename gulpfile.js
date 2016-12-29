@@ -14,24 +14,20 @@ gulp.task('style', function () {
     .pipe(gulp.dest('./public/css'))
 })
 
-gulp.task('watch', function () {
-  gulp.watch('src/sass/**/*.sass', ['style'])
-  gulp.watch('src/js/**/*.js', ['build'])
-})
-
-gulp.task('build', ['style'], function () {
-  // css
-  gulp.src(['./src/css/**/*.css'])
-    .pipe(minifyCss())
-    .pipe(gulp.dest('./public/css'))
-
-  // js
+gulp.task('scripts', function () {
   gulp.src(['./src/js/main.js'])
     .pipe(browserify({
       transform: ['babelify']
     }))
     .pipe(gulp.dest('./public/js'))
+})
 
+gulp.task('watch', function () {
+  gulp.watch('src/sass/**/*.sass', ['style'])
+  gulp.watch('src/js/**/*.js', ['scripts'])
+})
+
+gulp.task('build', ['style', 'scripts'], function () {
   // html
   gulp.src('src/*.html')
     .pipe(gulp.dest('public'))
