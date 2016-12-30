@@ -3,13 +3,22 @@ export default class GameState {
   constructor () {
     this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ]
     // 0 - light, 1 - dark
+    this.started = false
     this.currentTurn = this.TURNS[0]
     this.turnsCount = 0
     this.currentChecker = null
     this.updateInfo()
   }
 
-  // methods
+  startGame () {
+    this.start = true
+  }
+
+  endGame () {
+    this.currentChecker = null
+    this.currentTurn = null
+  }
+
   setNexnTurn () {
     this.turnsCount++
     this.currentTurn = this.TURNS[ this.turnsCount % 2 ]

@@ -1,3 +1,5 @@
+import { QUEEN_LINE } from './constants'
+
 export default class Checker {
   constructor (color) {
     this.color = color
@@ -43,11 +45,14 @@ export default class Checker {
     this.belongsTo(cell)
     cell.containChecker(this)
   }
+  canQueened () {
+    return !this.queen && this.cell.x === QUEEN_LINE[this.color]
+  }
   makeQueen () {
     this.queen = true
     this.checkerDOM.classList.toggle('queen')
   }
   isQueen () {
-    this.queen
+    return this.queen
   }
 }

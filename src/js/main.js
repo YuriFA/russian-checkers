@@ -4,18 +4,34 @@ import { COLORS } from './constants'
 class Checkers {
   constructor (args) {
     this.board = new GameBoard()
+    // this.test()
+    this.board.start()
   }
   // TEST
   test () {
-    console.log('TEST')
-    this.testCheckers(COLORS.checker.dark, [{x: 5, y: 5}, {x: 5, y: 3}])
-    this.deleteChecker(6, 4)
+    console.log('TESTING')
+    this.deleteChecker(1, 1)
+    this.deleteChecker(1, 3)
+    this.deleteChecker(2, 2)
+    this.deleteChecker(3, 1)
+    this.deleteChecker(3, 3)
+    this.deleteChecker(3, 5)
     this.deleteChecker(6, 6)
+    this.deleteChecker(6, 8)
+    this.deleteChecker(7, 7)
+    this.deleteChecker(8, 6)
+    this.deleteChecker(8, 8)
+    this.testCheckers([
+      {x: 3, y: 1, color: COLORS.checker.light},
+      {x: 2, y: 2, color: COLORS.checker.dark},
+      {x: 7, y: 7, color: COLORS.checker.dark}
+    ])
   }
-  testCheckers (checkerColor, cells) {
-    cells.forEach((cell) => {
-      const testCell = document.getElementById(`cell_${cell.x}_${cell.y}`).obj
-      const testChecker = this.board.createChecker(checkerColor, testCell)
+
+  testCheckers (checkers) {
+    checkers.forEach((checker) => {
+      const testCell = document.getElementById(`cell_${checker.x}_${checker.y}`).obj
+      const testChecker = this.board.createChecker(checker.color, testCell)
     })
   }
 
@@ -29,5 +45,4 @@ class Checkers {
 
 window.onload = () => {
   window.checkers = new Checkers()
-  window.checkers.test()
 }

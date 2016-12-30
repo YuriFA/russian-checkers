@@ -16,17 +16,16 @@
     float: left
     width: 12.5%
     height: 12.5%
+    &.highlight
+        cursor: pointer
+        background-color: #cfd22d
+        opacity: 0.5
 
 .cell__black
     background-color: #562700
 
 .cell__white
     background-color: #D59A66
-
-.cell.highlight
-    cursor: pointer
-    background-color: #cfd22d
-    opacity: 0.5
 
 .checker
     height: 100%
@@ -42,18 +41,20 @@
         top: 6%
         box-sizing: border-box
         transition: all .3s ease-out
-
-.checker.active:after
-    box-shadow: 2px 3px 5px 5px rgba(0, 0, 0, 0.5)
+    &.active:after
+        box-shadow: 2px 3px 5px 5px rgba(0, 0, 0, 0.5)
+    &.marked
+        box-shadow: inset 0 0 4px 4px #cfd22d
+    &.queen:after
+        background-image: url('../img/crown.svg')
+        background-repeat: no-repeat
+        background-position: center center
 
 .checker__red:after
     background-color: $light_checker
 
 .checker__blue:after
     background-color: $dark_checker
-
-.checker.marked
-    box-shadow: inset 0 0 4px 4px #cfd22d
 
 #info
     padding: 20px 50px

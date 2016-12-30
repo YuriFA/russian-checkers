@@ -22,6 +22,10 @@ export const MOVE_TYPE = {
 }
 export const LEFT = 0
 export const RIGHT = 1
+export const QUEEN_LINE = {
+  [ COLORS.checker.dark ]: N,
+  [ COLORS.checker.light ]: 1
+}
 export const MOVE_MAP = {
   [ COLORS.checker.light ]: {
     fw: [

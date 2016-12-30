@@ -8,6 +8,10 @@ export default class GameBoard {
     this.boardDOM = document.getElementById('board')
     this.draw()
     this.state = new GameState()
+  }
+
+  start () {
+    this.state.startGame()
     this.markAvailableCheckers(this.state.currentTurn)
   }
 
@@ -42,6 +46,9 @@ export default class GameBoard {
     this.deactivateCheckers()
     if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
       const availableMoves = this.getAvailableMoves(checker)
+      // if (checker.isQueen()) {
+      //   console.log('HE ALO', availableMoves.moves)
+      // }
       checker.activate()
       this.showMoves(availableMoves.moves)
       this.state.currentChecker = checker
@@ -61,8 +68,14 @@ export default class GameBoard {
   }
 
   move (checker, cell) {
-    const wasEaten = this.eatIfItPossible(checker.cell, cell)
+    const wasEaten = this.eatIfItPossible(checker, cell)
     checker.moveTo(cell)
+
+    if (checker.canQueened()) {
+      console.log('QUEENED')
+      checker.makeQueen()
+    }
+
     const mustEat = this.getAvailableMoves(checker, true)
     this.deactivateCheckers()
     if (wasEaten && mustEat && mustEat.moves) {
@@ -74,11 +87,12 @@ export default class GameBoard {
       this.state.setNexnTurn()
       this.markAvailableCheckers(this.state.currentTurn)
     }
+
     this.state.updateInfo()
   }
 
-  getCell (x, y) {
-    const cell = document.getElementById(`cell_${x}_${y}`)
+  getCell (pos) {
+    const cell = document.getElementById(`cell_${pos.x}_${pos.y}`)
     return cell ? cell.obj : null
   }
 
@@ -103,12 +117,23 @@ export default class GameBoard {
     const enemyEatingFilter = (mv) => mv && mv.cell && mv.type === MOVE_TYPE.EAT
     const freeMoveFilter = (mv) => mv && mv.cell && mv.type === MOVE_TYPE.FREE
     let moves = []
-    moves.push(
-      this.getAvailableCell(checker, checkerMoves.fw[ LEFT ], onlyEat),
-      this.getAvailableCell(checker, checkerMoves.fw[ RIGHT ], onlyEat),
-      this.getAvailableCell(checker, checkerMoves.bw[ LEFT ], true),
-      this.getAvailableCell(checker, checkerMoves.bw[ RIGHT ], true)
-    )
+    if (checker.isQueen()) {
+      console.log('searching moves for queen')
+      moves.push(
+        ...this.getAvailableCellsForQueen(checker, checkerMoves.fw[ LEFT ], onlyEat),
+        ...this.getAvailableCellsForQueen(checker, checkerMoves.fw[ RIGHT ], onlyEat),
+        ...this.getAvailableCellsForQueen(checker, checkerMoves.bw[ LEFT ], onlyEat),
+        ...this.getAvailableCellsForQueen(checker, checkerMoves.bw[ RIGHT ], onlyEat)
+      )
+    } else {
+      // console.log('searching moves for checker')
+      moves.push(
+        this.getAvailableCell(checker, checkerMoves.fw[ LEFT ], onlyEat),
+        this.getAvailableCell(checker, checkerMoves.fw[ RIGHT ], onlyEat),
+        this.getAvailableCell(checker, checkerMoves.bw[ LEFT ], true),
+        this.getAvailableCell(checker, checkerMoves.bw[ RIGHT ], true)
+      )
+    }
     if (moves.some(enemyEatingFilter)) {
       moves = {
         type: MOVE_TYPE.EAT,
@@ -120,49 +145,115 @@ export default class GameBoard {
         moves: moves.filter(freeMoveFilter)
       }
     }
+    // if (checker.isQueen()) {
+    //   console.log('ALO', moves)
+    // }
     return moves.moves.length ? moves : null
+  }
+
+  getAvailableCellsForQueen (checker, direction, onlyEat) {
+    let aCell = {}
+    let ret = []
+    let eatDirection = false
+    let curDirection = direction
+    do {
+      // console.log('DIRECTION', curDirection, eatDirection ? false : onlyEat)
+      aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat)
+      if (aCell) {
+        let isEat = aCell.type === MOVE_TYPE.EAT
+        eatDirection = isEat ? true : eatDirection
+        curDirection = this.calcNextDirectionCell(curDirection, direction, isEat ? 2 : 1)
+        if (eatDirection) {
+          aCell.type = MOVE_TYPE.EAT
+        }
+        console.log(aCell)
+        ret.push(aCell)
+        // if (!confirm('CYKA BLYAT')) {
+        //   break
+        // }
+      } else {
+        break
+      }
+      // console.log(aCell, aCell ? aCell.cell.cellDOM : '', curDirection)
+    } while (aCell !== null)
+
+    return ret
   }
 
   getAvailableCell (checker, direction, onlyEat = false) {
     const curPos = checker.cell.getPosition()
-    const cell = this.getCell(curPos.x + direction.x, curPos.y + direction.y)
-    const cellHasChecker = cell && cell.hasChecker()
-    if (!cellHasChecker && !onlyEat) {
+    const cell = this.getCell({ x: curPos.x + direction.x, y: curPos.y + direction.y })
+    if (cell && !cell.hasChecker() && !onlyEat) {
       return {
         type: MOVE_TYPE.FREE,
         cell: cell
       }
     }
-    if (cellHasChecker && checker.color !== cell.checker.color) {
-      return {
-        type: MOVE_TYPE.EAT,
-        cell: this.cellAfterEating(cell.getPosition(), direction)
+    if (cell && cell.hasChecker() && checker.color !== cell.checker.color) {
+      let cellAfterEat = this.cellAfterEating(cell.getPosition(), direction)
+      if (cellAfterEat) {
+        return {
+          type: MOVE_TYPE.EAT,
+          cell: cellAfterEat
+        }
       }
     }
 
     return null
   }
 
-  cellAfterEating (enemyPosition, dirPosition) {
-    const cell = this.getCell(enemyPosition.x + dirPosition.x, enemyPosition.y + dirPosition.y)
+  cellAfterEating (enemyPosition, direction) {
+    const cell = this.getCell({
+      x: enemyPosition.x + Math.sign(direction.x),
+      y: enemyPosition.y + Math.sign(direction.y)
+    })
     return cell && !cell.hasChecker() ? cell : null
   }
 
-  eatIfItPossible (curCell, nextCell) {
-    if (Math.abs(curCell.x - nextCell.x) === 2) {
+  eatIfItPossible (checker, nextCell) {
+    const curCell = checker.cell
+    if (Math.abs(curCell.x - nextCell.x) >= 2) {
       const direction = this.calcDirectionOfMove(curCell, nextCell)
-      const enemyCell = this.getCell(curCell.x + direction.x, curCell.y + direction.y)
-      enemyCell.checker.belongsTo(null)
-      enemyCell.removeChecker()
-      return true
+      const enemyCell = !checker.isQueen()
+                        ? this.getCell({ x: curCell.x + direction.x, y: curCell.y + direction.y })
+                        : this.findEnemyCell(curCell, nextCell, direction)
+      if (enemyCell && enemyCell.checker) {
+        enemyCell.checker.belongsTo(null)
+        enemyCell.removeChecker()
+        return true
+      }
     }
     return false
   }
 
+  findEnemyCell (cellFrom, cellTo, direction) {
+    let enemy = null
+    let curDirection = this.calcNextDirectionCell(cellFrom, direction)
+    while (enemy !== cellTo) {
+      enemy = this.getCell(curDirection)
+      // console.log(curDirection, enemy, this.getCell(curDirection))
+      if (enemy && enemy.hasChecker() || !enemy) {
+        break
+      }
+      curDirection = this.calcNextDirectionCell(curDirection, direction)
+      // if (!confirm('CYKA BLYAT')) {
+      //   break
+      // }
+    }
+    return enemy
+  }
+
+  calcNextDirectionCell (curDirection, direction, offset = 1) {
+    return {
+      x: curDirection.x + direction.x * offset,
+      y: curDirection.y + direction.y * offset
+    }
+  }
+
   calcDirectionOfMove (curCell, nextCell) {
     return {
-      x: (nextCell.x - curCell.x) / 2,
-      y: (nextCell.y - curCell.y) / 2
+      x: Math.sign(nextCell.x - curCell.x),
+      y: Math.sign(nextCell.y - curCell.y)
     }
   }
 

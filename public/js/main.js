@@ -95,6 +95,8 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _constants = require('./constants');
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Checker = function () {
@@ -163,6 +165,11 @@ var Checker = function () {
       cell.containChecker(this);
     }
   }, {
+    key: 'canQueened',
+    value: function canQueened() {
+      return !this.queen && this.cell.x === _constants.QUEEN_LINE[this.color];
+    }
+  }, {
     key: 'makeQueen',
     value: function makeQueen() {
       this.queen = true;
@@ -171,7 +178,7 @@ var Checker = function () {
   }, {
     key: 'isQueen',
     value: function isQueen() {
-      this.queen;
+      return this.queen;
     }
   }]);
 
@@ -180,7 +187,7 @@ var Checker = function () {
 
 exports.default = Checker;
 
-},{}],3:[function(require,module,exports){
+},{"./constants":5}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -205,6 +212,8 @@ var _Cell2 = _interopRequireDefault(_Cell);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GameBoard = function () {
@@ -214,13 +223,18 @@ var GameBoard = function () {
     this.boardDOM = document.getElementById('board');
     this.draw();
     this.state = new _GameState2.default();
-    this.markAvailableCheckers(this.state.currentTurn);
   }
 
-  // drawing board
-
-
   _createClass(GameBoard, [{
+    key: 'start',
+    value: function start() {
+      this.state.startGame();
+      this.markAvailableCheckers(this.state.currentTurn);
+    }
+
+    // drawing board
+
+  }, {
     key: 'draw',
     value: function draw() {
       for (var i = 1; i <= _constants.N; i++) {
@@ -255,6 +269,9 @@ var GameBoard = function () {
       this.deactivateCheckers();
       if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
         var availableMoves = this.getAvailableMoves(checker);
+        // if (checker.isQueen()) {
+        //   console.log('HE ALO', availableMoves.moves)
+        // }
         checker.activate();
         this.showMoves(availableMoves.moves);
         this.state.currentChecker = checker;
@@ -276,8 +293,14 @@ var GameBoard = function () {
   }, {
     key: 'move',
     value: function move(checker, cell) {
-      var wasEaten = this.eatIfItPossible(checker.cell, cell);
+      var wasEaten = this.eatIfItPossible(checker, cell);
       checker.moveTo(cell);
+
+      if (checker.canQueened()) {
+        console.log('QUEENED');
+        checker.makeQueen();
+      }
+
       var mustEat = this.getAvailableMoves(checker, true);
       this.deactivateCheckers();
       if (wasEaten && mustEat && mustEat.moves) {
@@ -291,12 +314,13 @@ var GameBoard = function () {
         this.state.setNexnTurn();
         this.markAvailableCheckers(this.state.currentTurn);
       }
+
       this.state.updateInfo();
     }
   }, {
     key: 'getCell',
-    value: function getCell(x, y) {
-      var cell = document.getElementById('cell_' + x + '_' + y);
+    value: function getCell(pos) {
+      var cell = document.getElementById('cell_' + pos.x + '_' + pos.y);
       return cell ? cell.obj : null;
     }
   }, {
@@ -334,7 +358,15 @@ var GameBoard = function () {
         return mv && mv.cell && mv.type === _constants.MOVE_TYPE.FREE;
       };
       var moves = [];
-      moves.push(this.getAvailableCell(checker, checkerMoves.fw[_constants.LEFT], onlyEat), this.getAvailableCell(checker, checkerMoves.fw[_constants.RIGHT], onlyEat), this.getAvailableCell(checker, checkerMoves.bw[_constants.LEFT], true), this.getAvailableCell(checker, checkerMoves.bw[_constants.RIGHT], true));
+      if (checker.isQueen()) {
+        var _moves;
+
+        console.log('searching moves for queen');
+        (_moves = moves).push.apply(_moves, _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.fw[_constants.LEFT], onlyEat)).concat(_toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.fw[_constants.RIGHT], onlyEat)), _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.bw[_constants.LEFT], onlyEat)), _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.bw[_constants.RIGHT], onlyEat))));
+      } else {
+        // console.log('searching moves for checker')
+        moves.push(this.getAvailableCell(checker, checkerMoves.fw[_constants.LEFT], onlyEat), this.getAvailableCell(checker, checkerMoves.fw[_constants.RIGHT], onlyEat), this.getAvailableCell(checker, checkerMoves.bw[_constants.LEFT], true), this.getAvailableCell(checker, checkerMoves.bw[_constants.RIGHT], true));
+      }
       if (moves.some(enemyEatingFilter)) {
         moves = {
           type: _constants.MOVE_TYPE.EAT,
@@ -346,7 +378,40 @@ var GameBoard = function () {
           moves: moves.filter(freeMoveFilter)
         };
       }
+      // if (checker.isQueen()) {
+      //   console.log('ALO', moves)
+      // }
       return moves.moves.length ? moves : null;
+    }
+  }, {
+    key: 'getAvailableCellsForQueen',
+    value: function getAvailableCellsForQueen(checker, direction, onlyEat) {
+      var aCell = {};
+      var ret = [];
+      var eatDirection = false;
+      var curDirection = direction;
+      do {
+        // console.log('DIRECTION', curDirection, eatDirection ? false : onlyEat)
+        aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat);
+        if (aCell) {
+          var isEat = aCell.type === _constants.MOVE_TYPE.EAT;
+          eatDirection = isEat ? true : eatDirection;
+          curDirection = this.calcNextDirectionCell(curDirection, direction, isEat ? 2 : 1);
+          if (eatDirection) {
+            aCell.type = _constants.MOVE_TYPE.EAT;
+          }
+          console.log(aCell);
+          ret.push(aCell);
+          // if (!confirm('CYKA BLYAT')) {
+          //   break
+          // }
+        } else {
+          break;
+        }
+        // console.log(aCell, aCell ? aCell.cell.cellDOM : '', curDirection)
+      } while (aCell !== null);
+
+      return ret;
     }
   }, {
     key: 'getAvailableCell',
@@ -354,47 +419,83 @@ var GameBoard = function () {
       var onlyEat = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
       var curPos = checker.cell.getPosition();
-      var cell = this.getCell(curPos.x + direction.x, curPos.y + direction.y);
-      var cellHasChecker = cell && cell.hasChecker();
-      if (!cellHasChecker && !onlyEat) {
+      var cell = this.getCell({ x: curPos.x + direction.x, y: curPos.y + direction.y });
+      if (cell && !cell.hasChecker() && !onlyEat) {
         return {
           type: _constants.MOVE_TYPE.FREE,
           cell: cell
         };
       }
-      if (cellHasChecker && checker.color !== cell.checker.color) {
-        return {
-          type: _constants.MOVE_TYPE.EAT,
-          cell: this.cellAfterEating(cell.getPosition(), direction)
-        };
+      if (cell && cell.hasChecker() && checker.color !== cell.checker.color) {
+        var cellAfterEat = this.cellAfterEating(cell.getPosition(), direction);
+        if (cellAfterEat) {
+          return {
+            type: _constants.MOVE_TYPE.EAT,
+            cell: cellAfterEat
+          };
+        }
       }
 
       return null;
     }
   }, {
     key: 'cellAfterEating',
-    value: function cellAfterEating(enemyPosition, dirPosition) {
-      var cell = this.getCell(enemyPosition.x + dirPosition.x, enemyPosition.y + dirPosition.y);
+    value: function cellAfterEating(enemyPosition, direction) {
+      var cell = this.getCell({
+        x: enemyPosition.x + Math.sign(direction.x),
+        y: enemyPosition.y + Math.sign(direction.y)
+      });
       return cell && !cell.hasChecker() ? cell : null;
     }
   }, {
     key: 'eatIfItPossible',
-    value: function eatIfItPossible(curCell, nextCell) {
-      if (Math.abs(curCell.x - nextCell.x) === 2) {
+    value: function eatIfItPossible(checker, nextCell) {
+      var curCell = checker.cell;
+      if (Math.abs(curCell.x - nextCell.x) >= 2) {
         var direction = this.calcDirectionOfMove(curCell, nextCell);
-        var enemyCell = this.getCell(curCell.x + direction.x, curCell.y + direction.y);
-        enemyCell.checker.belongsTo(null);
-        enemyCell.removeChecker();
-        return true;
+        var enemyCell = !checker.isQueen() ? this.getCell({ x: curCell.x + direction.x, y: curCell.y + direction.y }) : this.findEnemyCell(curCell, nextCell, direction);
+        if (enemyCell && enemyCell.checker) {
+          enemyCell.checker.belongsTo(null);
+          enemyCell.removeChecker();
+          return true;
+        }
       }
       return false;
+    }
+  }, {
+    key: 'findEnemyCell',
+    value: function findEnemyCell(cellFrom, cellTo, direction) {
+      var enemy = null;
+      var curDirection = this.calcNextDirectionCell(cellFrom, direction);
+      while (enemy !== cellTo) {
+        enemy = this.getCell(curDirection);
+        // console.log(curDirection, enemy, this.getCell(curDirection))
+        if (enemy && enemy.hasChecker() || !enemy) {
+          break;
+        }
+        curDirection = this.calcNextDirectionCell(curDirection, direction);
+        // if (!confirm('CYKA BLYAT')) {
+        //   break
+        // }
+      }
+      return enemy;
+    }
+  }, {
+    key: 'calcNextDirectionCell',
+    value: function calcNextDirectionCell(curDirection, direction) {
+      var offset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+
+      return {
+        x: curDirection.x + direction.x * offset,
+        y: curDirection.y + direction.y * offset
+      };
     }
   }, {
     key: 'calcDirectionOfMove',
     value: function calcDirectionOfMove(curCell, nextCell) {
       return {
-        x: (nextCell.x - curCell.x) / 2,
-        y: (nextCell.y - curCell.y) / 2
+        x: Math.sign(nextCell.x - curCell.x),
+        y: Math.sign(nextCell.y - curCell.y)
       };
     }
   }, {
@@ -462,16 +563,25 @@ var GameState = function () {
 
     this.TURNS = [_constants.COLORS.checker.light, _constants.COLORS.checker.dark];
     // 0 - light, 1 - dark
+    this.started = false;
     this.currentTurn = this.TURNS[0];
     this.turnsCount = 0;
     this.currentChecker = null;
     this.updateInfo();
   }
 
-  // methods
-
-
   _createClass(GameState, [{
+    key: 'startGame',
+    value: function startGame() {
+      this.start = true;
+    }
+  }, {
+    key: 'endGame',
+    value: function endGame() {
+      this.currentChecker = null;
+      this.currentTurn = null;
+    }
+  }, {
     key: 'setNexnTurn',
     value: function setNexnTurn() {
       this.turnsCount++;
@@ -499,7 +609,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _MOVE_MAP;
+var _QUEEN_LINE, _MOVE_MAP;
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -527,6 +637,7 @@ var MOVE_TYPE = exports.MOVE_TYPE = {
 };
 var LEFT = exports.LEFT = 0;
 var RIGHT = exports.RIGHT = 1;
+var QUEEN_LINE = exports.QUEEN_LINE = (_QUEEN_LINE = {}, _defineProperty(_QUEEN_LINE, COLORS.checker.dark, N), _defineProperty(_QUEEN_LINE, COLORS.checker.light, 1), _QUEEN_LINE);
 var MOVE_MAP = exports.MOVE_MAP = (_MOVE_MAP = {}, _defineProperty(_MOVE_MAP, COLORS.checker.light, {
   fw: [{ x: -1, y: -1 }, { x: -1, y: 1 }],
   bw: [{ x: 1, y: -1 }, { x: 1, y: 1 }]
@@ -555,6 +666,8 @@ var Checkers = function () {
     _classCallCheck(this, Checkers);
 
     this.board = new _GameBoard2.default();
+    // this.test()
+    this.board.start();
   }
   // TEST
 
@@ -562,19 +675,28 @@ var Checkers = function () {
   _createClass(Checkers, [{
     key: 'test',
     value: function test() {
-      console.log('TEST');
-      this.testCheckers(_constants.COLORS.checker.dark, [{ x: 5, y: 5 }, { x: 5, y: 3 }]);
-      this.deleteChecker(6, 4);
+      console.log('TESTING');
+      this.deleteChecker(1, 1);
+      this.deleteChecker(1, 3);
+      this.deleteChecker(2, 2);
+      this.deleteChecker(3, 1);
+      this.deleteChecker(3, 3);
+      this.deleteChecker(3, 5);
       this.deleteChecker(6, 6);
+      this.deleteChecker(6, 8);
+      this.deleteChecker(7, 7);
+      this.deleteChecker(8, 6);
+      this.deleteChecker(8, 8);
+      this.testCheckers([{ x: 3, y: 1, color: _constants.COLORS.checker.light }, { x: 2, y: 2, color: _constants.COLORS.checker.dark }, { x: 7, y: 7, color: _constants.COLORS.checker.dark }]);
     }
   }, {
     key: 'testCheckers',
-    value: function testCheckers(checkerColor, cells) {
+    value: function testCheckers(checkers) {
       var _this = this;
 
-      cells.forEach(function (cell) {
-        var testCell = document.getElementById('cell_' + cell.x + '_' + cell.y).obj;
-        var testChecker = _this.board.createChecker(checkerColor, testCell);
+      checkers.forEach(function (checker) {
+        var testCell = document.getElementById('cell_' + checker.x + '_' + checker.y).obj;
+        var testChecker = _this.board.createChecker(checker.color, testCell);
       });
     }
   }, {
@@ -592,7 +714,6 @@ var Checkers = function () {
 
 window.onload = function () {
   window.checkers = new Checkers();
-  window.checkers.test();
 };
 
 },{"./GameBoard":3,"./constants":5}]},{},[6])
