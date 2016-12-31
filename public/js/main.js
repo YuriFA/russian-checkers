@@ -217,10 +217,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GameBoard = function () {
-  function GameBoard() {
+  function GameBoard(board) {
     _classCallCheck(this, GameBoard);
 
-    this.boardDOM = document.getElementById('board');
+    this.boardDOM = board;
     this.draw();
     this.state = new _GameState2.default();
   }
@@ -661,11 +661,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var board = document.getElementById('board');
+
 var Checkers = function () {
   function Checkers(args) {
     _classCallCheck(this, Checkers);
 
-    this.board = new _GameBoard2.default();
+    this.board = new _GameBoard2.default(board);
     // this.test()
     this.board.start();
   }
@@ -712,8 +714,22 @@ var Checkers = function () {
   return Checkers;
 }();
 
+function resizeHandle() {
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  var minWH = Math.floor(Math.min(w, h) * 0.9);
+  board.style.width = minWH + 'px';
+  board.style.height = minWH + 'px';
+  board.style.left = Math.floor((w - minWH) / 2) + 'px';
+  console.log('Window', board, minWH);
+}
+
 window.onload = function () {
   window.checkers = new Checkers();
+  resizeHandle();
+  console.log('Loaded');
 };
+
+window.onresize = resizeHandle;
 
 },{"./GameBoard":3,"./constants":5}]},{},[6])

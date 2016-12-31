@@ -4,8 +4,8 @@ import Checker from './Checker'
 import Cell from './Cell'
 
 export default class GameBoard {
-  constructor () {
-    this.boardDOM = document.getElementById('board')
+  constructor (board) {
+    this.boardDOM = board
     this.draw()
     this.state = new GameState()
   }

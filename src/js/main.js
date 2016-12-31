@@ -1,9 +1,11 @@
 import GameBoard from './GameBoard'
 import { COLORS } from './constants'
 
+const board = document.getElementById('board')
+
 class Checkers {
   constructor (args) {
-    this.board = new GameBoard()
+    this.board = new GameBoard(board)
     // this.test()
     this.board.start()
   }
@@ -43,6 +45,20 @@ class Checkers {
   }
 }
 
+function resizeHandle () {
+  const w = window.innerWidth
+  const h = window.innerHeight
+  const minWH = Math.floor(Math.min(w, h) * 0.9)
+  board.style.width = `${minWH}px`
+  board.style.height = `${minWH}px`
+  board.style.left = `${Math.floor((w - minWH) / 2)}px`
+  console.log('Window', board, minWH)
+}
+
 window.onload = () => {
   window.checkers = new Checkers()
+  resizeHandle()
+  console.log('Loaded')
 }
+
+window.onresize = resizeHandle
