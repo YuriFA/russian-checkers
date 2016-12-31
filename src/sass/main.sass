@@ -2,21 +2,23 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:400,700&subset=cyrillic')
 
 body
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Roboto', sans-serif
 
 #board > div
     float: left
 
 #game
-    display: flex;
-    max-width: 960px;
-    width: 80%;
-    margin: 0 auto;
+    display: flex
+
+.board_container
+    max-width: 960px
+    width: 90%
+    margin: 0 auto
 
 #board
     position: relative
-    width: 35vw
-    height: 35vw
+    width: 80vmin
+    height: 80vmin
 
 .cell
     float: left
@@ -63,7 +65,7 @@ body
     background-color: $dark_checker
 
 #info
-    padding: 2%
+    padding-top: 2%
     font-size: 1vmax
     >div
         margin-bottom: 20px
