@@ -46,9 +46,6 @@ export default class GameBoard {
     this.deactivateCheckers()
     if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
       const availableMoves = this.getAvailableMoves(checker)
-      // if (checker.isQueen()) {
-      //   console.log('HE ALO', availableMoves.moves)
-      // }
       checker.activate()
       this.showMoves(availableMoves.moves)
       this.state.currentChecker = checker

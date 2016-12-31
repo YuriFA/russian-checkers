@@ -57,8 +57,8 @@ function resizeHandle () {
 
 window.onload = () => {
   window.checkers = new Checkers()
-  resizeHandle()
+  // resizeHandle()
   console.log('Loaded')
 }
 
-window.onresize = resizeHandle
+// window.onresize = resizeHandle

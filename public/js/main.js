@@ -269,9 +269,6 @@ var GameBoard = function () {
       this.deactivateCheckers();
       if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
         var availableMoves = this.getAvailableMoves(checker);
-        // if (checker.isQueen()) {
-        //   console.log('HE ALO', availableMoves.moves)
-        // }
         checker.activate();
         this.showMoves(availableMoves.moves);
         this.state.currentChecker = checker;
@@ -726,10 +723,10 @@ function resizeHandle() {
 
 window.onload = function () {
   window.checkers = new Checkers();
-  resizeHandle();
+  // resizeHandle()
   console.log('Loaded');
 };
 
-window.onresize = resizeHandle;
+// window.onresize = resizeHandle
 
 },{"./GameBoard":3,"./constants":5}]},{},[6])

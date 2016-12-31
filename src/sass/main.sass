@@ -1,16 +1,22 @@
 @import vars
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,700&subset=cyrillic')
+
+body
+    font-family: 'Roboto', sans-serif;
 
 #board > div
     float: left
 
 #game
-    // margin: 0 auto
-    // width: 50%
+    display: flex;
+    max-width: 960px;
+    width: 80%;
+    margin: 0 auto;
 
 #board
     position: relative
-    width: 700px
-    height: 700px
+    width: 35vw
+    height: 35vw
 
 .cell
     float: left
@@ -57,8 +63,8 @@
     background-color: $dark_checker
 
 #info
-    padding: 20px 50px
-    font-size: 25px
+    padding: 2%
+    font-size: 1vmax
     >div
         margin-bottom: 20px
 
