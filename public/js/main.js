@@ -289,7 +289,7 @@ var GameBoard = function () {
     value: function move(checker, cell) {
       var wasEaten = this.eatIfItPossible(checker, cell);
       checker.moveTo(cell);
-
+      console.log(wasEaten);
       if (checker.canQueened()) {
         console.log('QUEENED');
         checker.makeQueen();
@@ -389,6 +389,9 @@ var GameBoard = function () {
         aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat);
         if (aCell) {
           var isEat = aCell.type === _constants.MOVE_TYPE.EAT;
+          if (eatDirection && isEat) {
+            break;
+          }
           eatDirection = isEat ? true : eatDirection;
           curDirection = this.calcNextDirectionCell(curDirection, direction, isEat ? 2 : 1);
           if (eatDirection) {
@@ -663,7 +666,7 @@ var Checkers = function () {
 
     console.time('New board');
     this.board = new _GameBoard2.default(board);
-    // this.test()
+    this.test();
     this.board.start();
     console.timeEnd('New board');
   }
@@ -674,18 +677,22 @@ var Checkers = function () {
     key: 'test',
     value: function test() {
       console.log('TESTING');
-      this.deleteChecker(1, 1);
+      // this.deleteChecker(1, 1)
       this.deleteChecker(1, 3);
       this.deleteChecker(2, 2);
-      this.deleteChecker(3, 1);
+      // this.deleteChecker(3, 1)
       this.deleteChecker(3, 3);
       this.deleteChecker(3, 5);
-      this.deleteChecker(6, 6);
-      this.deleteChecker(6, 8);
-      this.deleteChecker(7, 7);
-      this.deleteChecker(8, 6);
-      this.deleteChecker(8, 8);
-      this.testCheckers([{ x: 3, y: 1, color: _constants.COLORS.checker.light }, { x: 2, y: 2, color: _constants.COLORS.checker.dark }, { x: 7, y: 7, color: _constants.COLORS.checker.dark }]);
+      // this.deleteChecker(6, 6)
+      // this.deleteChecker(6, 8)
+      // this.deleteChecker(7, 7)
+      // this.deleteChecker(8, 6)
+      // this.deleteChecker(8, 8)
+      this.testCheckers([
+      // {x: 3, y: 1, color: COLORS.checker.light},
+      { x: 2, y: 2, color: _constants.COLORS.checker.light },
+      // {x: 7, y: 7, color: COLORS.checker.dark}
+      { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
     }
   }, {
     key: 'testCheckers',

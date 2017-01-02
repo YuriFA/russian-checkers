@@ -67,7 +67,7 @@ export default class GameBoard {
   move (checker, cell) {
     const wasEaten = this.eatIfItPossible(checker, cell)
     checker.moveTo(cell)
-
+    console.log(wasEaten)
     if (checker.canQueened()) {
       console.log('QUEENED')
       checker.makeQueen()
@@ -158,6 +158,9 @@ export default class GameBoard {
       aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat)
       if (aCell) {
         let isEat = aCell.type === MOVE_TYPE.EAT
+        if (eatDirection && isEat) {
+          break
+        }
         eatDirection = isEat ? true : eatDirection
         curDirection = this.calcNextDirectionCell(curDirection, direction, isEat ? 2 : 1)
         if (eatDirection) {

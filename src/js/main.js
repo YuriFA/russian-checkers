@@ -7,28 +7,29 @@ class Checkers {
   constructor (args) {
     console.time('New board')
     this.board = new GameBoard(board)
-    // this.test()
+    this.test()
     this.board.start()
     console.timeEnd('New board')
   }
   // TEST
   test () {
     console.log('TESTING')
-    this.deleteChecker(1, 1)
+    // this.deleteChecker(1, 1)
     this.deleteChecker(1, 3)
     this.deleteChecker(2, 2)
-    this.deleteChecker(3, 1)
+    // this.deleteChecker(3, 1)
     this.deleteChecker(3, 3)
     this.deleteChecker(3, 5)
-    this.deleteChecker(6, 6)
-    this.deleteChecker(6, 8)
-    this.deleteChecker(7, 7)
-    this.deleteChecker(8, 6)
-    this.deleteChecker(8, 8)
+    // this.deleteChecker(6, 6)
+    // this.deleteChecker(6, 8)
+    // this.deleteChecker(7, 7)
+    // this.deleteChecker(8, 6)
+    // this.deleteChecker(8, 8)
     this.testCheckers([
-      {x: 3, y: 1, color: COLORS.checker.light},
-      {x: 2, y: 2, color: COLORS.checker.dark},
-      {x: 7, y: 7, color: COLORS.checker.dark}
+      // {x: 3, y: 1, color: COLORS.checker.light},
+      {x: 2, y: 2, color: COLORS.checker.light},
+      // {x: 7, y: 7, color: COLORS.checker.dark}
+      {x: 4, y: 6, color: COLORS.checker.dark}
     ])
   }
 
