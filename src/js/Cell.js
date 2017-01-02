@@ -20,7 +20,6 @@ export default class Cell {
     })()
   }
 
-  // public methods
   getPosition () {
     return {
       x: this.x,

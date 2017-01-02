@@ -35,9 +35,6 @@ var Cell = function () {
     }();
   }
 
-  // public methods
-
-
   _createClass(Cell, [{
     key: 'getPosition',
     value: function getPosition() {
@@ -298,9 +295,9 @@ var GameBoard = function () {
         checker.makeQueen();
       }
 
-      var mustEat = this.getAvailableMoves(checker, true);
+      var mustEat = this.getAvailableMoves(checker, true); // only for eat(jump)
       this.deactivateCheckers();
-      if (wasEaten && mustEat && mustEat.moves) {
+      if (wasEaten && mustEat) {
         checker.activate();
         this.showMoves(mustEat.moves);
       } else {
@@ -664,9 +661,11 @@ var Checkers = function () {
   function Checkers(args) {
     _classCallCheck(this, Checkers);
 
+    console.time('New board');
     this.board = new _GameBoard2.default(board);
     // this.test()
     this.board.start();
+    console.timeEnd('New board');
   }
   // TEST
 

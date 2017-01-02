@@ -28,9 +28,6 @@ gulp.task('watch', function () {
 })
 
 gulp.task('build', ['style', 'scripts'], function () {
-  // html
-  gulp.src('src/*.html')
-    .pipe(gulp.dest('public'))
 })
 
 gulp.task('default', ['watch'])

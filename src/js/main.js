@@ -5,9 +5,11 @@ const board = document.getElementById('board')
 
 class Checkers {
   constructor (args) {
+    console.time('New board')
     this.board = new GameBoard(board)
     // this.test()
     this.board.start()
+    console.timeEnd('New board')
   }
   // TEST
   test () {

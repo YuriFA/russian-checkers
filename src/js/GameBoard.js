@@ -73,9 +73,9 @@ export default class GameBoard {
       checker.makeQueen()
     }
 
-    const mustEat = this.getAvailableMoves(checker, true)
+    const mustEat = this.getAvailableMoves(checker, true) // only for eat(jump)
     this.deactivateCheckers()
-    if (wasEaten && mustEat && mustEat.moves) {
+    if (wasEaten && mustEat) {
       checker.activate()
       this.showMoves(mustEat.moves)
     } else {
