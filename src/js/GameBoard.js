@@ -4,15 +4,18 @@ import Checker from './Checker'
 import Cell from './Cell'
 
 export default class GameBoard {
-  constructor (board) {
+  constructor (board, socket) {
     this.boardDOM = board
+    this.socket = socket
     this.draw()
     this.state = new GameState()
   }
 
   start () {
+    this.boardDOM.style.display = 'block'
     this.state.startGame()
     this.markAvailableCheckers(this.state.currentTurn)
+    console.log('game started')
   }
 
   // drawing board
@@ -58,8 +61,13 @@ export default class GameBoard {
 
   cellClickHandle (e) {
     const cell = e.target.obj
-    if (cell instanceof Cell && this.state.currentChecker && cell.isHighlighted()) {
-      this.move(this.state.currentChecker, cell)
+    const checker = this.state.currentChecker
+    if (cell instanceof Cell && checker && cell.isHighlighted()) {
+      this.socket.emit('move', {
+        from: checker.cell.getPosition(),
+        to: cell.getPosition()
+      })
+      this.move(checker, cell)
     }
     return false
   }
@@ -67,7 +75,6 @@ export default class GameBoard {
   move (checker, cell) {
     const wasEaten = this.eatIfItPossible(checker, cell)
     checker.moveTo(cell)
-    console.log(wasEaten)
     if (checker.canQueened()) {
       console.log('QUEENED')
       checker.makeQueen()
@@ -84,7 +91,6 @@ export default class GameBoard {
       this.state.setNexnTurn()
       this.markAvailableCheckers(this.state.currentTurn)
     }
-
     this.state.updateInfo()
   }
 

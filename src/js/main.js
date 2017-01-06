@@ -4,11 +4,10 @@ import { COLORS } from './constants'
 const board = document.getElementById('board')
 
 class Checkers {
-  constructor (args) {
+  constructor (socket) {
     console.time('New board')
-    this.board = new GameBoard(board)
+    this.board = new GameBoard(board, socket)
     // this.test()
-    this.board.start()
     console.timeEnd('New board')
   }
   // TEST
@@ -36,7 +35,7 @@ class Checkers {
   testCheckers (checkers) {
     checkers.forEach((checker) => {
       const testCell = document.getElementById(`cell_${checker.x}_${checker.y}`).obj
-      const testChecker = this.board.createChecker(checker.color, testCell)
+      this.board.createChecker(checker.color, testCell)
     })
   }
 
@@ -48,20 +47,39 @@ class Checkers {
   }
 }
 
-function resizeHandle () {
-  const w = window.innerWidth
-  const h = window.innerHeight
-  const minWH = Math.floor(Math.min(w, h) * 0.9)
-  board.style.width = `${minWH}px`
-  board.style.height = `${minWH}px`
-  board.style.left = `${Math.floor((w - minWH) / 2)}px`
-  console.log('Window', board, minWH)
-}
-
 window.onload = () => {
-  window.checkers = new Checkers()
-  // resizeHandle()
+  const socket = io()
+  socket.emit('add player')
+  socket.on('can play', (data) => {
+    console.log('emited can play', data, data && data.id);
+    if (data && data.hasOwnProperty('id')) {
+      window.checkers = new Checkers(socket);
+      console.log('You can play');
+      if (data.id === 1) {
+        board.style.transform = 'rotate(180deg)';
+        window.checkers.board.start();
+      }
+    }
+  });
+  socket.on('message', (data) => {
+    console.log(data);
+  });
+  socket.on('start game', () => {
+    console.log('all players ready to start game');
+    window.checkers.board.start()
+  });
+  socket.on('player moved', (data) => {
+    const game = window.checkers;
+    if (game) {
+      console.log(data);
+      const checker = game.board.getCell(data.from).checker;
+      const cell = game.board.getCell(data.to);
+      if (checker && cell) {
+        checker.checkerDOM.click();
+        cell.cellDOM.click();
+      }
+    }
+  });
+
   console.log('Loaded')
 }
-
-// window.onresize = resizeHandle
