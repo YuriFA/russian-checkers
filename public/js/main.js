@@ -666,7 +666,7 @@ var Checkers = function () {
 
     console.time('New board');
     this.board = new _GameBoard2.default(board);
-    this.test();
+    // this.test()
     this.board.start();
     console.timeEnd('New board');
   }
