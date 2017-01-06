@@ -4,15 +4,19 @@ import Checker from './Checker'
 import Cell from './Cell'
 
 export default class GameBoard {
-  constructor (board, socket) {
+  constructor (board, socket, playerColor) {
     this.boardDOM = board
     this.socket = socket
     this.draw()
+    this.playerColor = playerColor;
     this.state = new GameState()
   }
 
+  canMove () {
+    return this.playerColor === this.state.currentTurn
+  }
+
   start () {
-    this.boardDOM.style.display = 'block'
     this.state.startGame()
     this.markAvailableCheckers(this.state.currentTurn)
     console.log('game started')
@@ -47,7 +51,7 @@ export default class GameBoard {
   checkerClickHandle (e) {
     const checker = e.target.obj
     this.deactivateCheckers()
-    if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
+    if (checker !== undefined && this.canMove() && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
       const availableMoves = this.getAvailableMoves(checker)
       checker.activate()
       this.showMoves(availableMoves.moves)
@@ -264,6 +268,7 @@ export default class GameBoard {
   }
 
   markAvailableCheckers (color) {
+    const yourMove = this.playerColor === color
     const checkers = this.getCheckers(color)
     let eatMoves = false
     let freeMoves = []
@@ -271,7 +276,7 @@ export default class GameBoard {
       const moves = this.getAvailableMoves(checker)
       if (moves) {
         if (moves.type === MOVE_TYPE.EAT) {
-          checker.mark()
+          checker.mark(yourMove)
           eatMoves = true
         } else {
           freeMoves.push(checker)
@@ -279,7 +284,7 @@ export default class GameBoard {
       }
     })
     if (!eatMoves && freeMoves.length) {
-      freeMoves.forEach((checker) => checker.mark())
+      freeMoves.forEach((checker) => checker.mark(yourMove))
     }
   }
 

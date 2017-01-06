@@ -1,12 +1,13 @@
 import GameBoard from './GameBoard'
-import { COLORS } from './constants'
+import { COLORS, PLAYER_COLOR } from './constants'
 
 const board = document.getElementById('board')
 
 class Checkers {
-  constructor (socket) {
+  constructor (socket, playerColor) {
     console.time('New board')
-    this.board = new GameBoard(board, socket)
+    this.board = new GameBoard(board, socket, playerColor)
+    console.log(`Ваш цвет ${playerColor}`)
     // this.test()
     console.timeEnd('New board')
   }
@@ -53,7 +54,7 @@ window.onload = () => {
   socket.on('can play', (data) => {
     console.log('emited can play', data, data && data.id);
     if (data && data.hasOwnProperty('id')) {
-      window.checkers = new Checkers(socket);
+      window.checkers = new Checkers(socket, PLAYER_COLOR[data.id]);
       console.log('You can play');
       if (data.id === 1) {
         board.style.transform = 'rotate(180deg)';
@@ -75,8 +76,9 @@ window.onload = () => {
       const checker = game.board.getCell(data.from).checker;
       const cell = game.board.getCell(data.to);
       if (checker && cell) {
-        checker.checkerDOM.click();
-        cell.cellDOM.click();
+        game.board.move(checker, cell);
+        // checker.checkerDOM.click();
+        // cell.cellDOM.click();
       }
     }
   });

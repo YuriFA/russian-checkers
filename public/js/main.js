@@ -135,8 +135,12 @@ var Checker = function () {
   }, {
     key: 'mark',
     value: function mark() {
+      var selfTurn = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
       this.marked = true;
-      this.checkerDOM.classList.toggle('marked');
+      if (selfTurn) {
+        this.checkerDOM.classList.toggle('marked');
+      }
     }
   }, {
     key: 'unmark',
@@ -214,19 +218,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GameBoard = function () {
-  function GameBoard(board, socket) {
+  function GameBoard(board, socket, playerColor) {
     _classCallCheck(this, GameBoard);
 
     this.boardDOM = board;
     this.socket = socket;
     this.draw();
+    this.playerColor = playerColor;
     this.state = new _GameState2.default();
   }
 
   _createClass(GameBoard, [{
+    key: 'canMove',
+    value: function canMove() {
+      return this.playerColor === this.state.currentTurn;
+    }
+  }, {
     key: 'start',
     value: function start() {
-      this.boardDOM.style.display = 'block';
       this.state.startGame();
       this.markAvailableCheckers(this.state.currentTurn);
       console.log('game started');
@@ -267,7 +276,7 @@ var GameBoard = function () {
     value: function checkerClickHandle(e) {
       var checker = e.target.obj;
       this.deactivateCheckers();
-      if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
+      if (checker !== undefined && this.canMove() && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
         var availableMoves = this.getAvailableMoves(checker);
         checker.activate();
         this.showMoves(availableMoves.moves);
@@ -506,6 +515,7 @@ var GameBoard = function () {
     value: function markAvailableCheckers(color) {
       var _this = this;
 
+      var yourMove = this.playerColor === color;
       var checkers = this.getCheckers(color);
       var eatMoves = false;
       var freeMoves = [];
@@ -513,7 +523,7 @@ var GameBoard = function () {
         var moves = _this.getAvailableMoves(checker);
         if (moves) {
           if (moves.type === _constants.MOVE_TYPE.EAT) {
-            checker.mark();
+            checker.mark(yourMove);
             eatMoves = true;
           } else {
             freeMoves.push(checker);
@@ -522,7 +532,7 @@ var GameBoard = function () {
       });
       if (!eatMoves && freeMoves.length) {
         freeMoves.forEach(function (checker) {
-          return checker.mark();
+          return checker.mark(yourMove);
         });
       }
     }
@@ -634,6 +644,10 @@ var COLORS = exports.COLORS = {
     false: 'white'
   }
 };
+var PLAYER_COLOR = exports.PLAYER_COLOR = {
+  0: COLORS.checker.light,
+  1: COLORS.checker.dark
+};
 var MOVE_TYPE = exports.MOVE_TYPE = {
   FREE: 0,
   EAT: 1
@@ -667,11 +681,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var board = document.getElementById('board');
 
 var Checkers = function () {
-  function Checkers(socket) {
+  function Checkers(socket, playerColor) {
     _classCallCheck(this, Checkers);
 
     console.time('New board');
-    this.board = new _GameBoard2.default(board, socket);
+    this.board = new _GameBoard2.default(board, socket, playerColor);
+    console.log('\u0412\u0430\u0448 \u0446\u0432\u0435\u0442 ' + playerColor);
     // this.test()
     console.timeEnd('New board');
   }
@@ -728,7 +743,7 @@ window.onload = function () {
   socket.on('can play', function (data) {
     console.log('emited can play', data, data && data.id);
     if (data && data.hasOwnProperty('id')) {
-      window.checkers = new Checkers(socket);
+      window.checkers = new Checkers(socket, _constants.PLAYER_COLOR[data.id]);
       console.log('You can play');
       if (data.id === 1) {
         board.style.transform = 'rotate(180deg)';
@@ -750,8 +765,9 @@ window.onload = function () {
       var checker = game.board.getCell(data.from).checker;
       var cell = game.board.getCell(data.to);
       if (checker && cell) {
-        checker.checkerDOM.click();
-        cell.cellDOM.click();
+        game.board.move(checker, cell);
+        // checker.checkerDOM.click();
+        // cell.cellDOM.click();
       }
     }
   });

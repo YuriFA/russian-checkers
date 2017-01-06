@@ -16,6 +16,10 @@ export const COLORS = {
     false: 'white'
   }
 }
+export const PLAYER_COLOR = {
+  0: COLORS.checker.light,
+  1: COLORS.checker.dark
+}
 export const MOVE_TYPE = {
   FREE: 0,
   EAT: 1

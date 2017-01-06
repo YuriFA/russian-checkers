@@ -26,9 +26,11 @@ export default class Checker {
       cell.cellDOM.appendChild(this.checkerDOM)
     }
   }
-  mark () {
+  mark (selfTurn = true) {
     this.marked = true
-    this.checkerDOM.classList.toggle('marked')
+    if (selfTurn) {
+      this.checkerDOM.classList.toggle('marked')
+    }
   }
   unmark () {
     this.marked = false
