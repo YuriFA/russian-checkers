@@ -557,18 +557,19 @@ var GameState = function () {
     this.currentTurn = this.TURNS[0];
     this.turnsCount = 0;
     this.currentChecker = null;
-    this.updateInfo();
   }
 
   _createClass(GameState, [{
     key: 'startGame',
     value: function startGame() {
       this.gameStarted = true;
+      this.updateInfo();
     }
   }, {
     key: 'endGame',
     value: function endGame() {
       if (this.gameStarted) {
+        this.gameStarted = false;
         this.currentChecker = null;
         this.currentTurn = null;
       }
@@ -584,11 +585,15 @@ var GameState = function () {
   }, {
     key: 'updateInfo',
     value: function updateInfo() {
+      var infoDOM = document.getElementById('info');
       if (this.gameStarted) {
         var turnsCountDOM = document.getElementById('turns_count');
         var turnColorDOM = document.getElementById('current_turn_color');
+        infoDOM.style.visibility = 'visible';
         turnsCountDOM.textContent = this.turnsCount;
         turnColorDOM.style.backgroundColor = _constants.BG_COLORS[this.currentTurn];
+      } else {
+        infoDOM.style.visibility = 'hidden';
       }
     }
   }]);
@@ -623,8 +628,8 @@ var COLORS = exports.COLORS = {
   }
 };
 var PLAYER_COLOR = exports.PLAYER_COLOR = {
-  0: COLORS.checker.light,
-  1: COLORS.checker.dark
+  1: COLORS.checker.light,
+  2: COLORS.checker.dark
 };
 var MOVES = exports.MOVES = {
   MOVE_COMPLETED: 0,
@@ -692,6 +697,15 @@ var Checkers = function () {
       console.log('game started');
     }
   }, {
+    key: 'restart',
+    value: function restart() {
+      var boardDOM = this.board.boardDOM;
+      boardDOM.innerHTML = '';
+      this.board = new _GameBoard2.default(boardDOM);
+      this.state.endGame();
+      this.state = new _GameState2.default();
+    }
+  }, {
     key: 'bindSocketEvents',
     value: function bindSocketEvents() {
       this.socket.on('can play', this.onCanPlay.bind(this));
@@ -699,6 +713,7 @@ var Checkers = function () {
       this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
       this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
       this.socket.on('chat message', this.onChatMessage.bind(this));
+      this.socket.on('restart game', this.onRestartGame.bind(this));
     }
   }, {
     key: 'markAvailableCheckers',
@@ -779,13 +794,16 @@ var Checkers = function () {
       if (data && data.hasOwnProperty('id')) {
         console.log('You can play');
         this.playerColor = _constants.PLAYER_COLOR[data.id];
-        if (data.id === 1) {
+        if (data.id === 2) {
           // this.playerColor(COLORS.checker.dark)
           this.board.boardDOM.style.transform = 'rotate(180deg)';
           this.start();
+        } else {
+          this.board.boardDOM.style.transform = 'rotate(0deg)';
         }
+      } else {
+        console.log('cant play');
       }
-      console.log('cant play');
     }
   }, {
     key: 'onMessage',
@@ -828,6 +846,13 @@ var Checkers = function () {
       if (this.chatContent) {
         this.chatContent.innerHTML = html;
       }
+    }
+  }, {
+    key: 'onRestartGame',
+    value: function onRestartGame(data) {
+      console.log('Restarting game...\nWait for players...');
+      this.onCanPlay(data);
+      this.restart();
     }
 
     // TEST
@@ -875,10 +900,12 @@ window.onload = function () {
   var game = new Checkers(boardDOM, online, chatContent);
 
   send.addEventListener('click', function () {
-    var text = game.playerColor + ': ' + messageField.value;
-    game.socket.emit('send', { message: text });
-    messageField.value = '';
-    game.addChatMessage(text);
+    if (messageField.value.length) {
+      var text = game.playerColor + ': ' + messageField.value;
+      game.socket.emit('send', { message: text });
+      messageField.value = '';
+      game.addChatMessage(text);
+    }
   });
   // console.log('Loaded')
 };

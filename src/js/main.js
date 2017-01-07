@@ -33,12 +33,21 @@ class Checkers {
     console.log('game started')
   }
 
+  restart () {
+    let boardDOM = this.board.boardDOM
+    boardDOM.innerHTML = ''
+    this.board = new GameBoard(boardDOM)
+    this.state.endGame()
+    this.state = new GameState()
+  }
+
   bindSocketEvents () {
     this.socket.on('can play', this.onCanPlay.bind(this))
     this.socket.on('message', this.onMessage.bind(this))
     this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this))
     this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this))
     this.socket.on('chat message', this.onChatMessage.bind(this))
+    this.socket.on('restart game', this.onRestartGame.bind(this))
   }
 
   markAvailableCheckers () {
@@ -110,13 +119,16 @@ class Checkers {
     if (data && data.hasOwnProperty('id')) {
       console.log('You can play')
       this.playerColor = PLAYER_COLOR[data.id]
-      if (data.id === 1) {
+      if (data.id === 2) {
         // this.playerColor(COLORS.checker.dark)
         this.board.boardDOM.style.transform = 'rotate(180deg)'
         this.start()
+      } else {
+        this.board.boardDOM.style.transform = 'rotate(0deg)'
       }
+    } else {
+      console.log('cant play')
     }
-    console.log('cant play')
   }
 
   onMessage (data) {
@@ -154,6 +166,12 @@ class Checkers {
     if (this.chatContent) {
       this.chatContent.innerHTML = html
     }
+  }
+
+  onRestartGame (data) {
+    console.log(`Restarting game...\nWait for players...`)
+    this.onCanPlay(data)
+    this.restart()
   }
 
   // TEST
@@ -199,10 +217,12 @@ window.onload = () => {
   var game = new Checkers(boardDOM, online, chatContent)
 
   send.addEventListener('click', () => {
-    var text = `${game.playerColor}: ${messageField.value}`
-    game.socket.emit('send', { message: text })
-    messageField.value = ''
-    game.addChatMessage(text)
+    if (messageField.value.length) {
+      var text = `${game.playerColor}: ${messageField.value}`
+      game.socket.emit('send', { message: text })
+      messageField.value = ''
+      game.addChatMessage(text)
+    }
   })
   // console.log('Loaded')
 }

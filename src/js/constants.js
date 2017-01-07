@@ -17,8 +17,8 @@ export const COLORS = {
   }
 }
 export const PLAYER_COLOR = {
-  0: COLORS.checker.light,
-  1: COLORS.checker.dark
+  1: COLORS.checker.light,
+  2: COLORS.checker.dark
 }
 export const MOVES = {
   MOVE_COMPLETED: 0,

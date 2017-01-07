@@ -7,15 +7,16 @@ export default class GameState {
     this.currentTurn = this.TURNS[0]
     this.turnsCount = 0
     this.currentChecker = null
-    this.updateInfo()
   }
 
   startGame () {
     this.gameStarted = true
+    this.updateInfo()
   }
 
   endGame () {
     if (this.gameStarted) {
+      this.gameStarted = false
       this.currentChecker = null
       this.currentTurn = null
     }
@@ -29,11 +30,15 @@ export default class GameState {
   }
 
   updateInfo () {
+    const infoDOM = document.getElementById('info')
     if (this.gameStarted) {
       const turnsCountDOM = document.getElementById('turns_count')
       const turnColorDOM = document.getElementById('current_turn_color')
+      infoDOM.style.visibility = 'visible'
       turnsCountDOM.textContent = this.turnsCount
       turnColorDOM.style.backgroundColor = BG_COLORS[ this.currentTurn ]
+    } else {
+      infoDOM.style.visibility = 'hidden'
     }
   }
 }

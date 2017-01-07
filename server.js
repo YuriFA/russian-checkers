@@ -19,8 +19,8 @@ io.sockets.on('connection', (socket) => {
 
   socket.on('add player', () => {
     if (numPlayers < 2) {
-      socket.emit('can play', { id: numPlayers })
       numPlayers++
+      socket.emit('can play', { id: numPlayers })
       addedPlayer = true
       if (numPlayers === 2) {
         socket.broadcast.emit('enemy player connected')
@@ -45,8 +45,9 @@ io.sockets.on('connection', (socket) => {
     if (addedPlayer) {
       console.log('Player disconnected')
       numPlayers--
+      console.log(`Players count: ${numPlayers}`)
       if (numPlayers > 0) {
-        socket.broadcast.emit('restart game')
+        socket.broadcast.emit('restart game', { id: numPlayers })
       }
     }
   })
