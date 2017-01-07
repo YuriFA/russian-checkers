@@ -1,25 +1,42 @@
-import { N, COLORS, TOP_UP, BOTTOM_FROM, MOVE_TYPE, LEFT, RIGHT, MOVE_MAP } from './constants'
-import GameState from './GameState.js'
+import { N, COLORS, TOP_UP, BOTTOM_FROM, MOVES } from './constants'
 import Checker from './Checker'
 import Cell from './Cell'
 
+const LEFT = 0
+const RIGHT = 1
+
+const MOVE_MAP = {
+  [ COLORS.checker.light ]: {
+    fw: [
+      { x: -1, y: -1 },
+      { x: -1, y: 1 }
+    ],
+    bw: [
+      { x: 1, y: -1 },
+      { x: 1, y: 1 }
+    ]
+  },
+  [ COLORS.checker.dark ]: {
+    fw: [
+      { x: 1, y: -1 },
+      { x: 1, y: 1 }
+    ],
+    bw: [
+      { x: -1, y: -1 },
+      { x: -1, y: 1 }
+    ]
+  }
+}
+
+const MOVE_TYPE = {
+  FREE: 0,
+  EAT: 1
+}
+
 export default class GameBoard {
-  constructor (board, socket, playerColor) {
-    this.boardDOM = board
-    this.socket = socket
+  constructor (boardDOM) {
+    this.boardDOM = boardDOM
     this.draw()
-    this.playerColor = playerColor;
-    this.state = new GameState()
-  }
-
-  canMove () {
-    return this.playerColor === this.state.currentTurn
-  }
-
-  start () {
-    this.state.startGame()
-    this.markAvailableCheckers(this.state.currentTurn)
-    console.log('game started')
   }
 
   // drawing board
@@ -27,7 +44,7 @@ export default class GameBoard {
     for (let i = 1; i <= N; i++) {
       for (let j = 1; j <= N; j++) {
         const cell = new Cell(i, j)
-        cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this))
+        // cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this))
         this.boardDOM.appendChild(cell.cellDOM)
         this.drawChecker(cell)
       }
@@ -42,41 +59,14 @@ export default class GameBoard {
 
   createChecker (color, cell) {
     const checker = new Checker(color)
-    checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this))
+    // checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this))
     checker.belongsTo(cell)
     cell.containChecker(checker)
     return checker
   }
 
-  checkerClickHandle (e) {
-    const checker = e.target.obj
-    this.deactivateCheckers()
-    if (checker !== undefined && this.canMove() && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
-      const availableMoves = this.getAvailableMoves(checker)
-      checker.activate()
-      this.showMoves(availableMoves.moves)
-      this.state.currentChecker = checker
-    } else {
-      this.state.currentChecker = null
-    }
-
-    return false
-  }
-
-  cellClickHandle (e) {
-    const cell = e.target.obj
-    const checker = this.state.currentChecker
-    if (cell instanceof Cell && checker && cell.isHighlighted()) {
-      this.socket.emit('move', {
-        from: checker.cell.getPosition(),
-        to: cell.getPosition()
-      })
-      this.move(checker, cell)
-    }
-    return false
-  }
-
   move (checker, cell) {
+    let moveResult = ''
     const wasEaten = this.eatIfItPossible(checker, cell)
     checker.moveTo(cell)
     if (checker.canQueened()) {
@@ -89,13 +79,13 @@ export default class GameBoard {
     if (wasEaten && mustEat) {
       checker.activate()
       this.showMoves(mustEat.moves)
+      moveResult = MOVES.CAN_EAT_MORE
     } else {
-      const checkers = this.getCheckers(this.state.currentTurn, true)
+      const checkers = this.getCheckers(checker.color, true)
       checkers.forEach((checker) => checker.unmark())
-      this.state.setNexnTurn()
-      this.markAvailableCheckers(this.state.currentTurn)
+      moveResult = MOVES.MOVE_COMPLETED
     }
-    this.state.updateInfo()
+    return moveResult
   }
 
   getCell (pos) {
@@ -268,7 +258,6 @@ export default class GameBoard {
   }
 
   markAvailableCheckers (color) {
-    const yourMove = this.playerColor === color
     const checkers = this.getCheckers(color)
     let eatMoves = false
     let freeMoves = []
@@ -276,7 +265,7 @@ export default class GameBoard {
       const moves = this.getAvailableMoves(checker)
       if (moves) {
         if (moves.type === MOVE_TYPE.EAT) {
-          checker.mark(yourMove)
+          checker.mark()
           eatMoves = true
         } else {
           freeMoves.push(checker)
@@ -284,7 +273,7 @@ export default class GameBoard {
       }
     })
     if (!eatMoves && freeMoves.length) {
-      freeMoves.forEach((checker) => checker.mark(yourMove))
+      freeMoves.forEach((checker) => checker.mark())
     }
   }
 

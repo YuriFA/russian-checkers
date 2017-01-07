@@ -1,4 +1,9 @@
-import { QUEEN_LINE } from './constants'
+import { COLORS, N } from './constants'
+
+const QUEEN_LINE = {
+  [ COLORS.checker.dark ]: N,
+  [ COLORS.checker.light ]: 1
+}
 
 export default class Checker {
   constructor (color) {

@@ -92,9 +92,15 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _QUEEN_LINE;
+
 var _constants = require('./constants');
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var QUEEN_LINE = (_QUEEN_LINE = {}, _defineProperty(_QUEEN_LINE, _constants.COLORS.checker.dark, _constants.N), _defineProperty(_QUEEN_LINE, _constants.COLORS.checker.light, 1), _QUEEN_LINE);
 
 var Checker = function () {
   function Checker(color) {
@@ -168,7 +174,7 @@ var Checker = function () {
   }, {
     key: 'canQueened',
     value: function canQueened() {
-      return !this.queen && this.cell.x === _constants.QUEEN_LINE[this.color];
+      return !this.queen && this.cell.x === QUEEN_LINE[this.color];
     }
   }, {
     key: 'makeQueen',
@@ -197,11 +203,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _MOVE_MAP;
+
 var _constants = require('./constants');
-
-var _GameState = require('./GameState.js');
-
-var _GameState2 = _interopRequireDefault(_GameState);
 
 var _Checker = require('./Checker');
 
@@ -217,39 +221,42 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var LEFT = 0;
+var RIGHT = 1;
+
+var MOVE_MAP = (_MOVE_MAP = {}, _defineProperty(_MOVE_MAP, _constants.COLORS.checker.light, {
+  fw: [{ x: -1, y: -1 }, { x: -1, y: 1 }],
+  bw: [{ x: 1, y: -1 }, { x: 1, y: 1 }]
+}), _defineProperty(_MOVE_MAP, _constants.COLORS.checker.dark, {
+  fw: [{ x: 1, y: -1 }, { x: 1, y: 1 }],
+  bw: [{ x: -1, y: -1 }, { x: -1, y: 1 }]
+}), _MOVE_MAP);
+
+var MOVE_TYPE = {
+  FREE: 0,
+  EAT: 1
+};
+
 var GameBoard = function () {
-  function GameBoard(board, socket, playerColor) {
+  function GameBoard(boardDOM) {
     _classCallCheck(this, GameBoard);
 
-    this.boardDOM = board;
-    this.socket = socket;
+    this.boardDOM = boardDOM;
     this.draw();
-    this.playerColor = playerColor;
-    this.state = new _GameState2.default();
   }
 
+  // drawing board
+
+
   _createClass(GameBoard, [{
-    key: 'canMove',
-    value: function canMove() {
-      return this.playerColor === this.state.currentTurn;
-    }
-  }, {
-    key: 'start',
-    value: function start() {
-      this.state.startGame();
-      this.markAvailableCheckers(this.state.currentTurn);
-      console.log('game started');
-    }
-
-    // drawing board
-
-  }, {
     key: 'draw',
     value: function draw() {
       for (var i = 1; i <= _constants.N; i++) {
         for (var j = 1; j <= _constants.N; j++) {
           var cell = new _Cell2.default(i, j);
-          cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this));
+          // cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this))
           this.boardDOM.appendChild(cell.cellDOM);
           this.drawChecker(cell);
         }
@@ -266,44 +273,15 @@ var GameBoard = function () {
     key: 'createChecker',
     value: function createChecker(color, cell) {
       var checker = new _Checker2.default(color);
-      checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this));
+      // checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this))
       checker.belongsTo(cell);
       cell.containChecker(checker);
       return checker;
     }
   }, {
-    key: 'checkerClickHandle',
-    value: function checkerClickHandle(e) {
-      var checker = e.target.obj;
-      this.deactivateCheckers();
-      if (checker !== undefined && this.canMove() && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
-        var availableMoves = this.getAvailableMoves(checker);
-        checker.activate();
-        this.showMoves(availableMoves.moves);
-        this.state.currentChecker = checker;
-      } else {
-        this.state.currentChecker = null;
-      }
-
-      return false;
-    }
-  }, {
-    key: 'cellClickHandle',
-    value: function cellClickHandle(e) {
-      var cell = e.target.obj;
-      var checker = this.state.currentChecker;
-      if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
-        this.socket.emit('move', {
-          from: checker.cell.getPosition(),
-          to: cell.getPosition()
-        });
-        this.move(checker, cell);
-      }
-      return false;
-    }
-  }, {
     key: 'move',
     value: function move(checker, cell) {
+      var moveResult = '';
       var wasEaten = this.eatIfItPossible(checker, cell);
       checker.moveTo(cell);
       if (checker.canQueened()) {
@@ -316,15 +294,15 @@ var GameBoard = function () {
       if (wasEaten && mustEat) {
         checker.activate();
         this.showMoves(mustEat.moves);
+        moveResult = _constants.MOVES.CAN_EAT_MORE;
       } else {
-        var checkers = this.getCheckers(this.state.currentTurn, true);
+        var checkers = this.getCheckers(checker.color, true);
         checkers.forEach(function (checker) {
           return checker.unmark();
         });
-        this.state.setNexnTurn();
-        this.markAvailableCheckers(this.state.currentTurn);
+        moveResult = _constants.MOVES.MOVE_COMPLETED;
       }
-      this.state.updateInfo();
+      return moveResult;
     }
   }, {
     key: 'getCell',
@@ -359,31 +337,31 @@ var GameBoard = function () {
     value: function getAvailableMoves(checker) {
       var onlyEat = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
-      var checkerMoves = _constants.MOVE_MAP[checker.color];
+      var checkerMoves = MOVE_MAP[checker.color];
       var enemyEatingFilter = function enemyEatingFilter(mv) {
-        return mv && mv.cell && mv.type === _constants.MOVE_TYPE.EAT;
+        return mv && mv.cell && mv.type === MOVE_TYPE.EAT;
       };
       var freeMoveFilter = function freeMoveFilter(mv) {
-        return mv && mv.cell && mv.type === _constants.MOVE_TYPE.FREE;
+        return mv && mv.cell && mv.type === MOVE_TYPE.FREE;
       };
       var moves = [];
       if (checker.isQueen()) {
         var _moves;
 
         console.log('searching moves for queen');
-        (_moves = moves).push.apply(_moves, _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.fw[_constants.LEFT], onlyEat)).concat(_toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.fw[_constants.RIGHT], onlyEat)), _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.bw[_constants.LEFT], onlyEat)), _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.bw[_constants.RIGHT], onlyEat))));
+        (_moves = moves).push.apply(_moves, _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.fw[LEFT], onlyEat)).concat(_toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.fw[RIGHT], onlyEat)), _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.bw[LEFT], onlyEat)), _toConsumableArray(this.getAvailableCellsForQueen(checker, checkerMoves.bw[RIGHT], onlyEat))));
       } else {
         // console.log('searching moves for checker')
-        moves.push(this.getAvailableCell(checker, checkerMoves.fw[_constants.LEFT], onlyEat), this.getAvailableCell(checker, checkerMoves.fw[_constants.RIGHT], onlyEat), this.getAvailableCell(checker, checkerMoves.bw[_constants.LEFT], true), this.getAvailableCell(checker, checkerMoves.bw[_constants.RIGHT], true));
+        moves.push(this.getAvailableCell(checker, checkerMoves.fw[LEFT], onlyEat), this.getAvailableCell(checker, checkerMoves.fw[RIGHT], onlyEat), this.getAvailableCell(checker, checkerMoves.bw[LEFT], true), this.getAvailableCell(checker, checkerMoves.bw[RIGHT], true));
       }
       if (moves.some(enemyEatingFilter)) {
         moves = {
-          type: _constants.MOVE_TYPE.EAT,
+          type: MOVE_TYPE.EAT,
           moves: moves.filter(enemyEatingFilter)
         };
       } else {
         moves = {
-          type: _constants.MOVE_TYPE.FREE,
+          type: MOVE_TYPE.FREE,
           moves: moves.filter(freeMoveFilter)
         };
       }
@@ -403,14 +381,14 @@ var GameBoard = function () {
         // console.log('DIRECTION', curDirection, eatDirection ? false : onlyEat)
         aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat);
         if (aCell) {
-          var isEat = aCell.type === _constants.MOVE_TYPE.EAT;
+          var isEat = aCell.type === MOVE_TYPE.EAT;
           if (eatDirection && isEat) {
             break;
           }
           eatDirection = isEat ? true : eatDirection;
           curDirection = this.calcNextDirectionCell(curDirection, direction, isEat ? 2 : 1);
           if (eatDirection) {
-            aCell.type = _constants.MOVE_TYPE.EAT;
+            aCell.type = MOVE_TYPE.EAT;
           }
           console.log(aCell);
           ret.push(aCell);
@@ -434,7 +412,7 @@ var GameBoard = function () {
       var cell = this.getCell({ x: curPos.x + direction.x, y: curPos.y + direction.y });
       if (cell && !cell.hasChecker() && !onlyEat) {
         return {
-          type: _constants.MOVE_TYPE.FREE,
+          type: MOVE_TYPE.FREE,
           cell: cell
         };
       }
@@ -442,7 +420,7 @@ var GameBoard = function () {
         var cellAfterEat = this.cellAfterEating(cell.getPosition(), direction);
         if (cellAfterEat) {
           return {
-            type: _constants.MOVE_TYPE.EAT,
+            type: MOVE_TYPE.EAT,
             cell: cellAfterEat
           };
         }
@@ -515,15 +493,14 @@ var GameBoard = function () {
     value: function markAvailableCheckers(color) {
       var _this = this;
 
-      var yourMove = this.playerColor === color;
       var checkers = this.getCheckers(color);
       var eatMoves = false;
       var freeMoves = [];
       checkers.forEach(function (checker) {
         var moves = _this.getAvailableMoves(checker);
         if (moves) {
-          if (moves.type === _constants.MOVE_TYPE.EAT) {
-            checker.mark(yourMove);
+          if (moves.type === MOVE_TYPE.EAT) {
+            checker.mark();
             eatMoves = true;
           } else {
             freeMoves.push(checker);
@@ -532,7 +509,7 @@ var GameBoard = function () {
       });
       if (!eatMoves && freeMoves.length) {
         freeMoves.forEach(function (checker) {
-          return checker.mark(yourMove);
+          return checker.mark();
         });
       }
     }
@@ -557,7 +534,7 @@ var GameBoard = function () {
 
 exports.default = GameBoard;
 
-},{"./Cell":1,"./Checker":2,"./GameState.js":4,"./constants":5}],4:[function(require,module,exports){
+},{"./Cell":1,"./Checker":2,"./constants":5}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -576,7 +553,7 @@ var GameState = function () {
 
     this.TURNS = [_constants.COLORS.checker.light, _constants.COLORS.checker.dark];
     // 0 - light, 1 - dark
-    this.started = false;
+    this.gameStarted = false;
     this.currentTurn = this.TURNS[0];
     this.turnsCount = 0;
     this.currentChecker = null;
@@ -586,27 +563,33 @@ var GameState = function () {
   _createClass(GameState, [{
     key: 'startGame',
     value: function startGame() {
-      this.start = true;
+      this.gameStarted = true;
     }
   }, {
     key: 'endGame',
     value: function endGame() {
-      this.currentChecker = null;
-      this.currentTurn = null;
+      if (this.gameStarted) {
+        this.currentChecker = null;
+        this.currentTurn = null;
+      }
     }
   }, {
     key: 'setNexnTurn',
     value: function setNexnTurn() {
-      this.turnsCount++;
-      this.currentTurn = this.TURNS[this.turnsCount % 2];
+      if (this.gameStarted) {
+        this.turnsCount++;
+        this.currentTurn = this.TURNS[this.turnsCount % 2];
+      }
     }
   }, {
     key: 'updateInfo',
     value: function updateInfo() {
-      var turnsCountDOM = document.getElementById('turns_count');
-      var turnColorDOM = document.getElementById('current_turn_color');
-      turnsCountDOM.textContent = this.turnsCount;
-      turnColorDOM.style.backgroundColor = _constants.BG_COLORS[this.currentTurn];
+      if (this.gameStarted) {
+        var turnsCountDOM = document.getElementById('turns_count');
+        var turnColorDOM = document.getElementById('current_turn_color');
+        turnsCountDOM.textContent = this.turnsCount;
+        turnColorDOM.style.backgroundColor = _constants.BG_COLORS[this.currentTurn];
+      }
     }
   }]);
 
@@ -621,11 +604,6 @@ exports.default = GameState;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _QUEEN_LINE, _MOVE_MAP;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 var N = exports.N = 8;
 var WH = exports.WH = 100 / N;
 var TOP_UP = exports.TOP_UP = 4;
@@ -648,75 +626,222 @@ var PLAYER_COLOR = exports.PLAYER_COLOR = {
   0: COLORS.checker.light,
   1: COLORS.checker.dark
 };
-var MOVE_TYPE = exports.MOVE_TYPE = {
-  FREE: 0,
-  EAT: 1
+var MOVES = exports.MOVES = {
+  MOVE_COMPLETED: 0,
+  CAN_EAT_MORE: 1
 };
-var LEFT = exports.LEFT = 0;
-var RIGHT = exports.RIGHT = 1;
-var QUEEN_LINE = exports.QUEEN_LINE = (_QUEEN_LINE = {}, _defineProperty(_QUEEN_LINE, COLORS.checker.dark, N), _defineProperty(_QUEEN_LINE, COLORS.checker.light, 1), _QUEEN_LINE);
-var MOVE_MAP = exports.MOVE_MAP = (_MOVE_MAP = {}, _defineProperty(_MOVE_MAP, COLORS.checker.light, {
-  fw: [{ x: -1, y: -1 }, { x: -1, y: 1 }],
-  bw: [{ x: 1, y: -1 }, { x: 1, y: 1 }]
-}), _defineProperty(_MOVE_MAP, COLORS.checker.dark, {
-  fw: [{ x: 1, y: -1 }, { x: 1, y: 1 }],
-  bw: [{ x: -1, y: -1 }, { x: -1, y: 1 }]
-}), _MOVE_MAP);
 
 },{}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+// import PlayerHuman from './Player'
+
+
+var _constants = require('./constants');
 
 var _GameBoard = require('./GameBoard');
 
 var _GameBoard2 = _interopRequireDefault(_GameBoard);
 
-var _constants = require('./constants');
+var _GameState = require('./GameState');
+
+var _GameState2 = _interopRequireDefault(_GameState);
+
+var _Cell = require('./Cell');
+
+var _Cell2 = _interopRequireDefault(_Cell);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var board = document.getElementById('board');
-
 var Checkers = function () {
-  function Checkers(socket, playerColor) {
+  function Checkers(boardDOM) {
+    var online = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    var chatContent = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
     _classCallCheck(this, Checkers);
 
     console.time('New board');
-    this.board = new _GameBoard2.default(board, socket, playerColor);
-    console.log('\u0412\u0430\u0448 \u0446\u0432\u0435\u0442 ' + playerColor);
-    // this.test()
+    this.board = new _GameBoard2.default(boardDOM);
+    boardDOM.addEventListener('click', this.boardEventHandler.bind(this));
     console.timeEnd('New board');
+    this.state = new _GameState2.default();
+    this.playerColor = _constants.COLORS.checker.light;
+    this.online = online;
+    this.chatContent = chatContent;
+    if (online) {
+      this.chatMessages = [];
+      this.socket = io();
+      this.bindSocketEvents();
+      this.socket.emit('add player');
+    } else {
+      // this.test()
+      this.start();
+    }
   }
-  // TEST
-
 
   _createClass(Checkers, [{
-    key: 'test',
-    value: function test() {
-      console.log('TESTING');
-      // this.deleteChecker(1, 1)
-      this.deleteChecker(1, 3);
-      this.deleteChecker(2, 2);
-      // this.deleteChecker(3, 1)
-      this.deleteChecker(3, 3);
-      this.deleteChecker(3, 5);
-      // this.deleteChecker(6, 6)
-      // this.deleteChecker(6, 8)
-      // this.deleteChecker(7, 7)
-      // this.deleteChecker(8, 6)
-      // this.deleteChecker(8, 8)
-      this.testCheckers([
-      // {x: 3, y: 1, color: COLORS.checker.light},
-      { x: 2, y: 2, color: _constants.COLORS.checker.light },
-      // {x: 7, y: 7, color: COLORS.checker.dark}
-      { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
+    key: 'start',
+    value: function start() {
+      if (!this.state.gameStarted) {
+        this.state.startGame();
+        this.markAvailableCheckers();
+      }
+      console.log('game started');
     }
   }, {
-    key: 'testCheckers',
-    value: function testCheckers(checkers) {
+    key: 'bindSocketEvents',
+    value: function bindSocketEvents() {
+      this.socket.on('can play', this.onCanPlay.bind(this));
+      this.socket.on('message', this.onMessage.bind(this));
+      this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
+      this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
+      this.socket.on('chat message', this.onChatMessage.bind(this));
+    }
+  }, {
+    key: 'markAvailableCheckers',
+    value: function markAvailableCheckers() {
+      if (this.canMove()) {
+        this.board.markAvailableCheckers(this.state.currentTurn);
+      }
+    }
+  }, {
+    key: 'boardEventHandler',
+    value: function boardEventHandler(e) {
+      var elClass = e.target.getAttribute('class');
+      if (elClass) {
+        if (elClass.indexOf('cell') !== -1) {
+          this.cellClickHandle(e);
+        } else if (elClass.indexOf('checker') !== -1) {
+          this.checkerClickHandle(e);
+        }
+      }
+      return false;
+    }
+  }, {
+    key: 'checkerClickHandle',
+    value: function checkerClickHandle(e) {
+      var checker = e.target.obj;
+      this.board.deactivateCheckers();
+      if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
+        var availableMoves = this.board.getAvailableMoves(checker);
+        checker.activate();
+        this.board.showMoves(availableMoves.moves);
+        this.state.currentChecker = checker;
+      } else {
+        this.state.currentChecker = null;
+      }
+
+      return false;
+    }
+  }, {
+    key: 'cellClickHandle',
+    value: function cellClickHandle(e) {
+      var cell = e.target.obj;
+      var checker = this.state.currentChecker;
+      if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
+        if (this.online) {
+          this.socket.emit('move', {
+            from: checker.cell.getPosition(),
+            to: cell.getPosition()
+          });
+        }
+        this.move(checker, cell);
+      }
+      return false;
+    }
+  }, {
+    key: 'canMove',
+    value: function canMove() {
+      return this.playerColor === this.state.currentTurn;
+    }
+  }, {
+    key: 'move',
+    value: function move(checker, toCell) {
+      var isEnemyMove = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+      if (!isEnemyMove && this.canMove() || isEnemyMove && !this.canMove()) {
+        var moveResult = this.board.move(checker, toCell);
+        if (moveResult === _constants.MOVES.MOVE_COMPLETED) {
+          this.state.setNexnTurn();
+          this.markAvailableCheckers(this.state.currentTurn);
+        } else if (moveResult === _constants.MOVES.CAN_EAT_MORE) {
+          // IDK
+        }
+        this.state.updateInfo();
+      }
+    }
+  }, {
+    key: 'onCanPlay',
+    value: function onCanPlay(data) {
+      if (data && data.hasOwnProperty('id')) {
+        console.log('You can play');
+        this.playerColor = _constants.PLAYER_COLOR[data.id];
+        if (data.id === 1) {
+          // this.playerColor(COLORS.checker.dark)
+          this.board.boardDOM.style.transform = 'rotate(180deg)';
+          this.start();
+        }
+      }
+      console.log('cant play');
+    }
+  }, {
+    key: 'onMessage',
+    value: function onMessage(data) {
+      console.log(data.message);
+    }
+  }, {
+    key: 'onEnemyPlayerConnected',
+    value: function onEnemyPlayerConnected() {
+      console.log('all players ready to start this');
+      this.start();
+    }
+  }, {
+    key: 'onEnemyPlayerMoved',
+    value: function onEnemyPlayerMoved(data) {
+      console.log(data);
+      var checker = this.board.getCell(data.from).checker;
+      var cell = this.board.getCell(data.to);
+      if (checker && cell) {
+        this.move(checker, cell, true);
+      }
+    }
+  }, {
+    key: 'onChatMessage',
+    value: function onChatMessage(data) {
+      if (data.message) {
+        this.addChatMessage(data.message);
+      } else {
+        console.log('There is a problem: ' + data);
+      }
+    }
+  }, {
+    key: 'addChatMessage',
+    value: function addChatMessage(message) {
+      this.chatMessages.push(message);
+      var html = '';
+      for (var i = 0; i < this.chatMessages.length; i++) {
+        html += this.chatMessages[i] + '<br />';
+      }
+      if (this.chatContent) {
+        this.chatContent.innerHTML = html;
+      }
+    }
+
+    // TEST
+
+  }, {
+    key: '_test',
+    value: function _test() {
+      console.log('TESTING');
+      this._deleteCheckers([{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 5 }]);
+      this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }, { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
+    }
+  }, {
+    key: '_testCheckers',
+    value: function _testCheckers(checkers) {
       var _this = this;
 
       checkers.forEach(function (checker) {
@@ -725,11 +850,13 @@ var Checkers = function () {
       });
     }
   }, {
-    key: 'deleteChecker',
-    value: function deleteChecker(x, y) {
-      var cell = document.getElementById('cell_' + x + '_' + y).obj;
-      if (!cell || !cell.checker) return false;
-      cell.removeChecker();
+    key: '_deleteCheckers',
+    value: function _deleteCheckers(positions) {
+      positions.forEach(function (pos) {
+        var cell = document.getElementById('cell_' + pos.x + '_' + pos.y).obj;
+        if (!cell || !cell.checker) return false;
+        cell.removeChecker();
+      });
       return true;
     }
   }]);
@@ -738,41 +865,22 @@ var Checkers = function () {
 }();
 
 window.onload = function () {
-  var socket = io();
-  socket.emit('add player');
-  socket.on('can play', function (data) {
-    console.log('emited can play', data, data && data.id);
-    if (data && data.hasOwnProperty('id')) {
-      window.checkers = new Checkers(socket, _constants.PLAYER_COLOR[data.id]);
-      console.log('You can play');
-      if (data.id === 1) {
-        board.style.transform = 'rotate(180deg)';
-        window.checkers.board.start();
-      }
-    }
-  });
-  socket.on('message', function (data) {
-    console.log(data);
-  });
-  socket.on('start game', function () {
-    console.log('all players ready to start game');
-    window.checkers.board.start();
-  });
-  socket.on('player moved', function (data) {
-    var game = window.checkers;
-    if (game) {
-      console.log(data);
-      var checker = game.board.getCell(data.from).checker;
-      var cell = game.board.getCell(data.to);
-      if (checker && cell) {
-        game.board.move(checker, cell);
-        // checker.checkerDOM.click();
-        // cell.cellDOM.click();
-      }
-    }
-  });
+  var boardDOM = document.getElementById('board');
+  var chatContent = document.getElementById('chat_content');
+  var messageField = document.getElementById('message');
+  var send = document.getElementById('send');
 
-  console.log('Loaded');
+  var online = true;
+
+  var game = new Checkers(boardDOM, online, chatContent);
+
+  send.addEventListener('click', function () {
+    var text = game.playerColor + ': ' + messageField.value;
+    game.socket.emit('send', { message: text });
+    messageField.value = '';
+    game.addChatMessage(text);
+  });
+  // console.log('Loaded')
 };
 
-},{"./GameBoard":3,"./constants":5}]},{},[6])
+},{"./Cell":1,"./GameBoard":3,"./GameState":4,"./constants":5}]},{},[6])
