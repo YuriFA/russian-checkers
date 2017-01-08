@@ -7,7 +7,7 @@ import Chat from './Chat'
 window.onload = () => {
   const boardDOM = document.getElementById('board')
 
-  const online = false
+  const online = true
 
   class Checkers {
     constructor (boardDOM, online = false, chatContent = false) {
