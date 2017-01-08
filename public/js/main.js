@@ -726,7 +726,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 window.onload = function () {
   var boardDOM = document.getElementById('board');
 
-  var online = false;
+  var online = true;
 
   var Checkers = function () {
     function Checkers(boardDOM) {
