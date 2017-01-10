@@ -83,7 +83,7 @@ var Cell = function () {
 
 exports.default = Cell;
 
-},{"./constants":6}],2:[function(require,module,exports){
+},{"./constants":7}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -279,7 +279,302 @@ var Checker = function () {
 
 exports.default = Checker;
 
-},{"./constants":6}],4:[function(require,module,exports){
+},{"./constants":7}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.CheckersOnline = exports.Checkers = undefined;
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _constants = require('./constants');
+
+var _GameBoard = require('./GameBoard');
+
+var _GameBoard2 = _interopRequireDefault(_GameBoard);
+
+var _GameState = require('./GameState');
+
+var _GameState2 = _interopRequireDefault(_GameState);
+
+var _Cell = require('./Cell');
+
+var _Cell2 = _interopRequireDefault(_Cell);
+
+var _Chat = require('./Chat');
+
+var _Chat2 = _interopRequireDefault(_Chat);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Checkers = exports.Checkers = function () {
+  function Checkers(boardDOM) {
+    _classCallCheck(this, Checkers);
+
+    this.board = new _GameBoard2.default(boardDOM);
+    boardDOM.addEventListener('click', this.boardEventHandler.bind(this));
+    this.state = new _GameState2.default();
+    this.playerColor = _constants.COLORS.checker.light;
+    // this.start()
+  }
+
+  _createClass(Checkers, [{
+    key: 'start',
+    value: function start() {
+      if (!this.state.gameStarted) {
+        this.state.startGame();
+        this.markAvailableCheckers();
+      }
+      console.log('game started');
+    }
+  }, {
+    key: 'restart',
+    value: function restart() {
+      var boardDOM = this.board.boardDOM;
+      boardDOM.innerHTML = '';
+      this.board = new _GameBoard2.default(boardDOM);
+      this.state.endGame();
+      this.state = new _GameState2.default();
+    }
+  }, {
+    key: 'markAvailableCheckers',
+    value: function markAvailableCheckers() {
+      this.board.markAvailableCheckers(this.state.currentTurn);
+    }
+  }, {
+    key: 'boardEventHandler',
+    value: function boardEventHandler(e) {
+      var elClass = e.target.getAttribute('class');
+      if (elClass) {
+        if (elClass.indexOf('cell') !== -1) {
+          this.cellClickHandle(e);
+        } else if (elClass.indexOf('checker') !== -1) {
+          this.checkerClickHandle(e);
+        }
+      }
+      return false;
+    }
+  }, {
+    key: 'checkerClickHandle',
+    value: function checkerClickHandle(e) {
+      var checker = e.target.obj;
+      this.board.deactivateCheckers();
+      if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
+        var availableMoves = this.board.getAvailableMoves(checker);
+        checker.activate();
+        this.board.showMoves(availableMoves.moves);
+        this.state.currentChecker = checker;
+      } else {
+        this.state.currentChecker = null;
+      }
+
+      return true;
+    }
+  }, {
+    key: 'cellClickHandle',
+    value: function cellClickHandle(e) {
+      var cell = e.target.obj;
+      var checker = this.state.currentChecker;
+      if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
+        this.move(checker, cell);
+      }
+      return true;
+    }
+  }, {
+    key: 'move',
+    value: function move(checker, toCell) {
+      var moveResult = this.board.move(checker, toCell);
+      if (moveResult === _constants.MOVES.MOVE_COMPLETED) {
+        this.state.setNexnTurn();
+        this.markAvailableCheckers(this.state.currentTurn);
+      }
+      this.state.updateInfo();
+    }
+
+    // TEST
+
+  }, {
+    key: '_test',
+    value: function _test() {
+      console.log('TESTING');
+      this._deleteCheckers([{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 5 }]);
+      this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }, { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
+    }
+  }, {
+    key: '_testCheckers',
+    value: function _testCheckers(checkers) {
+      var _this = this;
+
+      checkers.forEach(function (checker) {
+        var testCell = document.getElementById('cell_' + checker.x + '_' + checker.y).obj;
+        _this.board.createChecker(checker.color, testCell);
+      });
+    }
+  }, {
+    key: '_deleteCheckers',
+    value: function _deleteCheckers(positions) {
+      positions.forEach(function (pos) {
+        var cell = document.getElementById('cell_' + pos.x + '_' + pos.y).obj;
+        if (!cell || !cell.checker) return false;
+        cell.removeChecker();
+      });
+      return true;
+    }
+  }]);
+
+  return Checkers;
+}();
+
+var CheckersOnline = exports.CheckersOnline = function (_Checkers) {
+  _inherits(CheckersOnline, _Checkers);
+
+  function CheckersOnline(boardDOM) {
+    _classCallCheck(this, CheckersOnline);
+
+    var _this2 = _possibleConstructorReturn(this, (CheckersOnline.__proto__ || Object.getPrototypeOf(CheckersOnline)).call(this, boardDOM));
+
+    _this2.socket = io();
+    _this2.bindSocketEvents();
+    _this2.socket.emit('add player');
+    _this2.chat = new _Chat2.default();
+    _this2.chat.changeSendEvent(_this2.chatClickHandler.bind(_this2));
+    return _this2;
+  }
+
+  _createClass(CheckersOnline, [{
+    key: 'start',
+    value: function start() {
+      _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'start', this).call(this);
+      this.chat.show();
+    }
+  }, {
+    key: 'canMove',
+    value: function canMove() {
+      return this.playerColor === this.state.currentTurn;
+    }
+  }, {
+    key: 'markAvailableCheckers',
+    value: function markAvailableCheckers() {
+      if (this.canMove()) {
+        _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'markAvailableCheckers', this).call(this, this.state.currentTurn);
+      }
+    }
+  }, {
+    key: 'move',
+    value: function move(checker, toCell) {
+      var isEnemyMove = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+      if (!isEnemyMove && this.canMove() || isEnemyMove && !this.canMove()) {
+        _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'move', this).call(this, checker, toCell);
+      }
+    }
+  }, {
+    key: 'bindSocketEvents',
+    value: function bindSocketEvents() {
+      this.socket.on('can play', this.onCanPlay.bind(this));
+      this.socket.on('message', this.onMessage.bind(this));
+      this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
+      this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
+      this.socket.on('chat message', this.onChatMessage.bind(this));
+      this.socket.on('restart game', this.onRestartGame.bind(this));
+    }
+  }, {
+    key: 'cellClickHandle',
+    value: function cellClickHandle(e) {
+      var cell = e.target.obj;
+      var checker = this.state.currentChecker;
+      if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
+        this.socket.emit('move', {
+          from: checker.cell.getPosition(),
+          to: cell.getPosition()
+        });
+        this.move(checker, cell);
+      }
+      return true;
+    }
+  }, {
+    key: 'chatClickHandler',
+    value: function chatClickHandler(e) {
+      if (this.chat && this.socket) {
+        var text = this.chat.messageField.value;
+        if (text.length) {
+          text = this.playerColor + ': ' + text;
+          this.socket.emit('send', { message: text });
+          this.chat.clearField();
+          this.chat.addMessage(text);
+        }
+      }
+    }
+  }, {
+    key: 'onCanPlay',
+    value: function onCanPlay(data) {
+      if (data && data.hasOwnProperty('id')) {
+        console.log('You can play');
+        this.playerColor = _constants.PLAYER_COLOR[data.id];
+        if (data.id === 2) {
+          // this.playerColor(COLORS.checker.dark)
+          this.board.boardDOM.style.transform = 'rotate(180deg)';
+          this.start();
+        } else {
+          this.board.boardDOM.style.transform = 'rotate(0deg)';
+        }
+      } else {
+        console.log('cant play');
+      }
+    }
+  }, {
+    key: 'onMessage',
+    value: function onMessage(data) {
+      console.log(data.message);
+    }
+  }, {
+    key: 'onEnemyPlayerConnected',
+    value: function onEnemyPlayerConnected() {
+      console.log('all players ready to start this');
+      this.start();
+    }
+  }, {
+    key: 'onEnemyPlayerMoved',
+    value: function onEnemyPlayerMoved(data) {
+      console.log(data);
+      var checker = this.board.getCell(data.from).checker;
+      var cell = this.board.getCell(data.to);
+      if (checker && cell) {
+        this.move(checker, cell, true);
+      }
+    }
+  }, {
+    key: 'onChatMessage',
+    value: function onChatMessage(data) {
+      if (data.message) {
+        this.chat.addMessage(data.message);
+      } else {
+        console.log('There is a problem: ' + data);
+      }
+    }
+  }, {
+    key: 'onRestartGame',
+    value: function onRestartGame(data) {
+      console.log('Restarting game...\nWait for players...');
+      this.onCanPlay(data);
+      this.restart();
+    }
+  }]);
+
+  return CheckersOnline;
+}(Checkers);
+
+},{"./Cell":1,"./Chat":2,"./GameBoard":5,"./GameState":6,"./constants":7}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -615,7 +910,7 @@ var GameBoard = function () {
 
 exports.default = GameBoard;
 
-},{"./Cell":1,"./Checker":3,"./constants":6}],5:[function(require,module,exports){
+},{"./Cell":1,"./Checker":3,"./constants":7}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -684,7 +979,7 @@ var GameState = function () {
 
 exports.default = GameState;
 
-},{"./constants":6}],6:[function(require,module,exports){
+},{"./constants":7}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -717,304 +1012,16 @@ var MOVES = exports.MOVES = {
   CAN_EAT_MORE: 1
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _constants = require('./constants');
-
-var _GameBoard = require('./GameBoard');
-
-var _GameBoard2 = _interopRequireDefault(_GameBoard);
-
-var _GameState = require('./GameState');
-
-var _GameState2 = _interopRequireDefault(_GameState);
-
-var _Cell = require('./Cell');
-
-var _Cell2 = _interopRequireDefault(_Cell);
-
-var _Chat = require('./Chat');
-
-var _Chat2 = _interopRequireDefault(_Chat);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _Checkers = require('./Checkers');
 
 window.onload = function () {
   var boardDOM = document.getElementById('board');
-
   var online = true;
 
-  var Checkers = function () {
-    function Checkers(boardDOM) {
-      _classCallCheck(this, Checkers);
-
-      this.board = new _GameBoard2.default(boardDOM);
-      boardDOM.addEventListener('click', this.boardEventHandler.bind(this));
-      this.state = new _GameState2.default();
-      this.playerColor = _constants.COLORS.checker.light;
-      // this.test()
-      // this.start()
-    }
-
-    _createClass(Checkers, [{
-      key: 'start',
-      value: function start() {
-        if (!this.state.gameStarted) {
-          this.state.startGame();
-          this.markAvailableCheckers();
-        }
-        console.log('game started');
-      }
-    }, {
-      key: 'restart',
-      value: function restart() {
-        var boardDOM = this.board.boardDOM;
-        boardDOM.innerHTML = '';
-        this.board = new _GameBoard2.default(boardDOM);
-        this.state.endGame();
-        this.state = new _GameState2.default();
-      }
-    }, {
-      key: 'markAvailableCheckers',
-      value: function markAvailableCheckers() {
-        this.board.markAvailableCheckers(this.state.currentTurn);
-      }
-    }, {
-      key: 'boardEventHandler',
-      value: function boardEventHandler(e) {
-        var elClass = e.target.getAttribute('class');
-        if (elClass) {
-          if (elClass.indexOf('cell') !== -1) {
-            this.cellClickHandle(e);
-          } else if (elClass.indexOf('checker') !== -1) {
-            this.checkerClickHandle(e);
-          }
-        }
-        return false;
-      }
-    }, {
-      key: 'checkerClickHandle',
-      value: function checkerClickHandle(e) {
-        var checker = e.target.obj;
-        this.board.deactivateCheckers();
-        if (checker !== undefined && checker.isMovePossible(this.state.currentChecker, this.state.currentTurn)) {
-          var availableMoves = this.board.getAvailableMoves(checker);
-          checker.activate();
-          this.board.showMoves(availableMoves.moves);
-          this.state.currentChecker = checker;
-        } else {
-          this.state.currentChecker = null;
-        }
-
-        return true;
-      }
-    }, {
-      key: 'cellClickHandle',
-      value: function cellClickHandle(e) {
-        var cell = e.target.obj;
-        var checker = this.state.currentChecker;
-        if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
-          this.move(checker, cell);
-        }
-        return true;
-      }
-    }, {
-      key: 'move',
-      value: function move(checker, toCell) {
-        var moveResult = this.board.move(checker, toCell);
-        if (moveResult === _constants.MOVES.MOVE_COMPLETED) {
-          this.state.setNexnTurn();
-          this.markAvailableCheckers(this.state.currentTurn);
-        }
-        this.state.updateInfo();
-      }
-
-      // TEST
-
-    }, {
-      key: '_test',
-      value: function _test() {
-        console.log('TESTING');
-        this._deleteCheckers([{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 5 }]);
-        this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }, { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
-      }
-    }, {
-      key: '_testCheckers',
-      value: function _testCheckers(checkers) {
-        var _this = this;
-
-        checkers.forEach(function (checker) {
-          var testCell = document.getElementById('cell_' + checker.x + '_' + checker.y).obj;
-          _this.board.createChecker(checker.color, testCell);
-        });
-      }
-    }, {
-      key: '_deleteCheckers',
-      value: function _deleteCheckers(positions) {
-        positions.forEach(function (pos) {
-          var cell = document.getElementById('cell_' + pos.x + '_' + pos.y).obj;
-          if (!cell || !cell.checker) return false;
-          cell.removeChecker();
-        });
-        return true;
-      }
-    }]);
-
-    return Checkers;
-  }();
-
-  var CheckersOnline = function (_Checkers) {
-    _inherits(CheckersOnline, _Checkers);
-
-    function CheckersOnline(boardDOM) {
-      _classCallCheck(this, CheckersOnline);
-
-      var _this2 = _possibleConstructorReturn(this, (CheckersOnline.__proto__ || Object.getPrototypeOf(CheckersOnline)).call(this, boardDOM));
-
-      _this2.socket = io();
-      _this2.bindSocketEvents();
-      _this2.socket.emit('add player');
-      _this2.chat = new _Chat2.default();
-      _this2.chat.changeSendEvent(_this2.chatClickHandler.bind(_this2));
-      return _this2;
-    }
-
-    _createClass(CheckersOnline, [{
-      key: 'start',
-      value: function start() {
-        _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'start', this).call(this);
-        this.chat.show();
-      }
-    }, {
-      key: 'canMove',
-      value: function canMove() {
-        return this.playerColor === this.state.currentTurn;
-      }
-    }, {
-      key: 'markAvailableCheckers',
-      value: function markAvailableCheckers() {
-        if (this.canMove()) {
-          _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'markAvailableCheckers', this).call(this, this.state.currentTurn);
-        }
-      }
-    }, {
-      key: 'move',
-      value: function move(checker, toCell) {
-        var isEnemyMove = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
-        if (!isEnemyMove && this.canMove() || isEnemyMove && !this.canMove()) {
-          _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'move', this).call(this, checker, toCell);
-        }
-      }
-    }, {
-      key: 'bindSocketEvents',
-      value: function bindSocketEvents() {
-        this.socket.on('can play', this.onCanPlay.bind(this));
-        this.socket.on('message', this.onMessage.bind(this));
-        this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
-        this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
-        this.socket.on('chat message', this.onChatMessage.bind(this));
-        this.socket.on('restart game', this.onRestartGame.bind(this));
-      }
-    }, {
-      key: 'cellClickHandle',
-      value: function cellClickHandle(e) {
-        var cell = e.target.obj;
-        var checker = this.state.currentChecker;
-        if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
-          this.socket.emit('move', {
-            from: checker.cell.getPosition(),
-            to: cell.getPosition()
-          });
-          this.move(checker, cell);
-        }
-        return true;
-      }
-    }, {
-      key: 'chatClickHandler',
-      value: function chatClickHandler(e) {
-        if (this.chat && this.socket) {
-          var text = this.chat.messageField.value;
-          if (text.length) {
-            text = this.playerColor + ': ' + text;
-            this.socket.emit('send', { message: text });
-            this.chat.clearField();
-            this.chat.addMessage(text);
-          }
-        }
-      }
-    }, {
-      key: 'onCanPlay',
-      value: function onCanPlay(data) {
-        if (data && data.hasOwnProperty('id')) {
-          console.log('You can play');
-          this.playerColor = _constants.PLAYER_COLOR[data.id];
-          if (data.id === 2) {
-            // this.playerColor(COLORS.checker.dark)
-            this.board.boardDOM.style.transform = 'rotate(180deg)';
-            this.start();
-          } else {
-            this.board.boardDOM.style.transform = 'rotate(0deg)';
-          }
-        } else {
-          console.log('cant play');
-        }
-      }
-    }, {
-      key: 'onMessage',
-      value: function onMessage(data) {
-        console.log(data.message);
-      }
-    }, {
-      key: 'onEnemyPlayerConnected',
-      value: function onEnemyPlayerConnected() {
-        console.log('all players ready to start this');
-        this.start();
-      }
-    }, {
-      key: 'onEnemyPlayerMoved',
-      value: function onEnemyPlayerMoved(data) {
-        console.log(data);
-        var checker = this.board.getCell(data.from).checker;
-        var cell = this.board.getCell(data.to);
-        if (checker && cell) {
-          this.move(checker, cell, true);
-        }
-      }
-    }, {
-      key: 'onChatMessage',
-      value: function onChatMessage(data) {
-        if (data.message) {
-          this.chat.addMessage(data.message);
-        } else {
-          console.log('There is a problem: ' + data);
-        }
-      }
-    }, {
-      key: 'onRestartGame',
-      value: function onRestartGame(data) {
-        console.log('Restarting game...\nWait for players...');
-        this.onCanPlay(data);
-        this.restart();
-      }
-    }]);
-
-    return CheckersOnline;
-  }(Checkers);
-
-  window.game = online ? new CheckersOnline(boardDOM) : new Checkers(boardDOM);
-  // console.log('Loaded')
+  window.game = online ? new _Checkers.CheckersOnline(boardDOM) : new _Checkers.Checkers(boardDOM);
 };
 
-},{"./Cell":1,"./Chat":2,"./GameBoard":4,"./GameState":5,"./constants":6}]},{},[7])
+},{"./Checkers":4}]},{},[8])
