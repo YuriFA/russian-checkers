@@ -95,7 +95,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Chat = function () {
-  function Chat(sendBtnHandler) {
+  function Chat() {
     _classCallCheck(this, Chat);
 
     this.chat = document.getElementById('chat');
@@ -103,26 +103,51 @@ var Chat = function () {
     this.chatContent = document.getElementById('chat_content');
     this.messageField = document.getElementById('message');
     this.sendBtn = document.getElementById('send');
-    this.bindBtnEvent('click', sendBtnHandler);
-    this.showChat();
+    this.bindEvents();
   }
 
   _createClass(Chat, [{
-    key: 'showChat',
-    value: function showChat() {
+    key: 'show',
+    value: function show() {
       if (this.chat) {
         this.chat.style.display = 'block';
       }
     }
   }, {
-    key: 'bindBtnEvent',
-    value: function bindBtnEvent(event, handler) {
-      this.sendBtn.addEventListener(event, handler);
-    }
-  }, {
     key: 'clearField',
     value: function clearField() {
       this.messageField.value = '';
+    }
+  }, {
+    key: 'bindEvents',
+    value: function bindEvents() {
+      this.onSend = this.onSend.bind(this);
+      this.onKeyUp = this.onKeyUp.bind(this);
+      this.sendBtn.addEventListener('click', this.onSend);
+      this.messageField.addEventListener('keyup', this.onKeyUp);
+    }
+  }, {
+    key: 'changeSendEvent',
+    value: function changeSendEvent(clickHandler) {
+      this.sendBtn.removeEventListener('click', this.onSend);
+      this.sendBtn.addEventListener('click', clickHandler);
+    }
+  }, {
+    key: 'onSend',
+    value: function onSend(e) {
+      var text = this.messageField.value;
+      if (text.length) {
+        text = 'You: ' + text;
+        this.clearField();
+        this.addMessage(text);
+      }
+    }
+  }, {
+    key: 'onKeyUp',
+    value: function onKeyUp(e) {
+      if (e.keyCode === 13) {
+        this.sendBtn.click();
+      }
     }
   }, {
     key: 'addMessage',
@@ -519,14 +544,10 @@ var GameBoard = function () {
       var curDirection = this.calcNextDirectionCell(cellFrom, direction);
       while (enemy !== cellTo) {
         enemy = this.getCell(curDirection);
-        // console.log(curDirection, enemy, this.getCell(curDirection))
-        if (enemy && enemy.hasChecker() || !enemy) {
+        if (!enemy || enemy && enemy.hasChecker()) {
           break;
         }
         curDirection = this.calcNextDirectionCell(curDirection, direction);
-        // if (!confirm('CYKA BLYAT')) {
-        //   break
-        // }
       }
       return enemy;
     }
@@ -726,7 +747,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 window.onload = function () {
   var boardDOM = document.getElementById('board');
 
-  var online = true;
+  var online = false;
 
   var Checkers = function () {
     function Checkers(boardDOM) {
@@ -744,7 +765,8 @@ window.onload = function () {
         this.socket = io();
         this.bindSocketEvents();
         this.socket.emit('add player');
-        this.chat = new _Chat2.default(this.chatClickHandler.bind(this));
+        this.chat = new _Chat2.default();
+        this.chat.changeSendEvent(this.chatClickHandler.bind(this));
       } else {
         // this.test()
         this.start();
@@ -757,6 +779,9 @@ window.onload = function () {
         if (!this.state.gameStarted) {
           this.state.startGame();
           this.markAvailableCheckers();
+        }
+        if (this.chat) {
+          this.chat.show();
         }
         console.log('game started');
       }

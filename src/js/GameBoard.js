@@ -7,24 +7,12 @@ const RIGHT = 1
 
 const MOVE_MAP = {
   [ COLORS.checker.light ]: {
-    fw: [
-      { x: -1, y: -1 },
-      { x: -1, y: 1 }
-    ],
-    bw: [
-      { x: 1, y: -1 },
-      { x: 1, y: 1 }
-    ]
+    fw: [ { x: -1, y: -1 }, { x: -1, y: 1 } ],
+    bw: [ { x: 1, y: -1 }, { x: 1, y: 1 } ]
   },
   [ COLORS.checker.dark ]: {
-    fw: [
-      { x: 1, y: -1 },
-      { x: 1, y: 1 }
-    ],
-    bw: [
-      { x: -1, y: -1 },
-      { x: -1, y: 1 }
-    ]
+    fw: [ { x: 1, y: -1 }, { x: 1, y: 1 } ],
+    bw: [ { x: -1, y: -1 }, { x: -1, y: 1 } ]
   }
 }
 
@@ -231,14 +219,10 @@ export default class GameBoard {
     let curDirection = this.calcNextDirectionCell(cellFrom, direction)
     while (enemy !== cellTo) {
       enemy = this.getCell(curDirection)
-      // console.log(curDirection, enemy, this.getCell(curDirection))
-      if (enemy && enemy.hasChecker() || !enemy) {
+      if (!enemy || enemy && enemy.hasChecker()) {
         break
       }
       curDirection = this.calcNextDirectionCell(curDirection, direction)
-      // if (!confirm('CYKA BLYAT')) {
-      //   break
-      // }
     }
     return enemy
   }

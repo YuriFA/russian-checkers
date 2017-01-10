@@ -7,7 +7,7 @@ import Chat from './Chat'
 window.onload = () => {
   const boardDOM = document.getElementById('board')
 
-  const online = true
+  const online = false
 
   class Checkers {
     constructor (boardDOM, online = false, chatContent = false) {
@@ -20,7 +20,8 @@ window.onload = () => {
         this.socket = io()
         this.bindSocketEvents()
         this.socket.emit('add player')
-        this.chat = new Chat(this.chatClickHandler.bind(this))
+        this.chat = new Chat()
+        this.chat.changeSendEvent(this.chatClickHandler.bind(this))
       } else {
         // this.test()
         this.start()
@@ -31,6 +32,9 @@ window.onload = () => {
       if (!this.state.gameStarted) {
         this.state.startGame()
         this.markAvailableCheckers()
+      }
+      if (this.chat) {
+        this.chat.show()
       }
       console.log('game started')
     }
