@@ -7,34 +7,22 @@ import Chat from './Chat'
 window.onload = () => {
   const boardDOM = document.getElementById('board')
 
-  const online = false
+  const online = true
 
   class Checkers {
-    constructor (boardDOM, online = false, chatContent = false) {
+    constructor (boardDOM) {
       this.board = new GameBoard(boardDOM)
       boardDOM.addEventListener('click', this.boardEventHandler.bind(this))
       this.state = new GameState()
       this.playerColor = COLORS.checker.light
-      this.online = online
-      if (online) {
-        this.socket = io()
-        this.bindSocketEvents()
-        this.socket.emit('add player')
-        this.chat = new Chat()
-        this.chat.changeSendEvent(this.chatClickHandler.bind(this))
-      } else {
-        // this.test()
-        this.start()
-      }
+      // this.test()
+      // this.start()
     }
 
     start () {
       if (!this.state.gameStarted) {
         this.state.startGame()
         this.markAvailableCheckers()
-      }
-      if (this.chat) {
-        this.chat.show()
       }
       console.log('game started')
     }
@@ -47,31 +35,8 @@ window.onload = () => {
       this.state = new GameState()
     }
 
-    bindSocketEvents () {
-      this.socket.on('can play', this.onCanPlay.bind(this))
-      this.socket.on('message', this.onMessage.bind(this))
-      this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this))
-      this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this))
-      this.socket.on('chat message', this.onChatMessage.bind(this))
-      this.socket.on('restart game', this.onRestartGame.bind(this))
-    }
-
-    chatClickHandler (e) {
-      if (this.chat && this.socket) {
-        var text = this.chat.messageField.value
-        if (text.length) {
-          text = `${this.playerColor}: ${text}`
-          this.socket.emit('send', { message: text })
-          this.chat.clearField()
-          this.chat.addMessage(text)
-        }
-      }
-    }
-
     markAvailableCheckers () {
-      if (this.canMove()) {
-        this.board.markAvailableCheckers(this.state.currentTurn)
-      }
+      this.board.markAvailableCheckers(this.state.currentTurn)
     }
 
     boardEventHandler (e) {
@@ -98,38 +63,121 @@ window.onload = () => {
         this.state.currentChecker = null
       }
 
-      return false
+      return true
     }
 
     cellClickHandle (e) {
       const cell = e.target.obj
       const checker = this.state.currentChecker
       if (cell instanceof Cell && checker && cell.isHighlighted()) {
-        if (this.online) {
-          this.socket.emit('move', {
-            from: checker.cell.getPosition(),
-            to: cell.getPosition()
-          })
-        }
         this.move(checker, cell)
       }
-      return false
+      return true
+    }
+
+    move (checker, toCell) {
+      let moveResult = this.board.move(checker, toCell)
+      if (moveResult === MOVES.MOVE_COMPLETED) {
+        this.state.setNexnTurn()
+        this.markAvailableCheckers(this.state.currentTurn)
+      }
+      this.state.updateInfo()
+    }
+
+    // TEST
+    _test () {
+      console.log('TESTING')
+      this._deleteCheckers([
+        {x: 1, y: 3},
+        {x: 2, y: 2},
+        {x: 3, y: 3},
+        {x: 3, y: 5}
+      ])
+      this._testCheckers([
+        {x: 2, y: 2, color: COLORS.checker.light},
+        {x: 4, y: 6, color: COLORS.checker.dark}
+      ])
+    }
+
+    _testCheckers (checkers) {
+      checkers.forEach((checker) => {
+        const testCell = document.getElementById(`cell_${checker.x}_${checker.y}`).obj
+        this.board.createChecker(checker.color, testCell)
+      })
+    }
+
+    _deleteCheckers (positions) {
+      positions.forEach((pos) => {
+        const cell = document.getElementById(`cell_${pos.x}_${pos.y}`).obj
+        if (!cell || !cell.checker) return false
+        cell.removeChecker()
+      })
+      return true
+    }
+  }
+
+  class CheckersOnline extends Checkers {
+    constructor (boardDOM) {
+      super(boardDOM)
+      this.socket = io()
+      this.bindSocketEvents()
+      this.socket.emit('add player')
+      this.chat = new Chat()
+      this.chat.changeSendEvent(this.chatClickHandler.bind(this))
+    }
+
+    start () {
+      super.start()
+      this.chat.show()
     }
 
     canMove () {
-      return !this.online || this.playerColor === this.state.currentTurn
+      return this.playerColor === this.state.currentTurn
+    }
+
+    markAvailableCheckers () {
+      if (this.canMove()) {
+        super.markAvailableCheckers(this.state.currentTurn)
+      }
     }
 
     move (checker, toCell, isEnemyMove = false) {
       if (!isEnemyMove && this.canMove() || isEnemyMove && !this.canMove()) {
-        let moveResult = this.board.move(checker, toCell)
-        if (moveResult === MOVES.MOVE_COMPLETED) {
-          this.state.setNexnTurn()
-          this.markAvailableCheckers(this.state.currentTurn)
-        } else if (moveResult === MOVES.CAN_EAT_MORE) {
-          // IDK
+        super.move(checker, toCell)
+      }
+    }
+
+    bindSocketEvents () {
+      this.socket.on('can play', this.onCanPlay.bind(this))
+      this.socket.on('message', this.onMessage.bind(this))
+      this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this))
+      this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this))
+      this.socket.on('chat message', this.onChatMessage.bind(this))
+      this.socket.on('restart game', this.onRestartGame.bind(this))
+    }
+
+    cellClickHandle (e) {
+      const cell = e.target.obj
+      const checker = this.state.currentChecker
+      if (cell instanceof Cell && checker && cell.isHighlighted()) {
+        this.socket.emit('move', {
+          from: checker.cell.getPosition(),
+          to: cell.getPosition()
+        })
+        this.move(checker, cell)
+      }
+      return true
+    }
+
+    chatClickHandler (e) {
+      if (this.chat && this.socket) {
+        var text = this.chat.messageField.value
+        if (text.length) {
+          text = `${this.playerColor}: ${text}`
+          this.socket.emit('send', { message: text })
+          this.chat.clearField()
+          this.chat.addMessage(text)
         }
-        this.state.updateInfo()
       }
     }
 
@@ -180,39 +228,8 @@ window.onload = () => {
       this.onCanPlay(data)
       this.restart()
     }
-
-    // TEST
-    _test () {
-      console.log('TESTING')
-      this._deleteCheckers([
-        {x: 1, y: 3},
-        {x: 2, y: 2},
-        {x: 3, y: 3},
-        {x: 3, y: 5}
-      ])
-      this._testCheckers([
-        {x: 2, y: 2, color: COLORS.checker.light},
-        {x: 4, y: 6, color: COLORS.checker.dark}
-      ])
-    }
-
-    _testCheckers (checkers) {
-      checkers.forEach((checker) => {
-        const testCell = document.getElementById(`cell_${checker.x}_${checker.y}`).obj
-        this.board.createChecker(checker.color, testCell)
-      })
-    }
-
-    _deleteCheckers (positions) {
-      positions.forEach((pos) => {
-        const cell = document.getElementById(`cell_${pos.x}_${pos.y}`).obj
-        if (!cell || !cell.checker) return false
-        cell.removeChecker()
-      })
-      return true
-    }
   }
 
-  window.game = new Checkers(boardDOM, online)
+  window.game = online ? new CheckersOnline(boardDOM) : new Checkers(boardDOM)
   // console.log('Loaded')
 }

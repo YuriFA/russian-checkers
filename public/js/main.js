@@ -720,6 +720,8 @@ var MOVES = exports.MOVES = {
 },{}],7:[function(require,module,exports){
 'use strict';
 
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _constants = require('./constants');
@@ -742,35 +744,27 @@ var _Chat2 = _interopRequireDefault(_Chat);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 window.onload = function () {
   var boardDOM = document.getElementById('board');
 
-  var online = false;
+  var online = true;
 
   var Checkers = function () {
     function Checkers(boardDOM) {
-      var online = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-      var chatContent = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
       _classCallCheck(this, Checkers);
 
       this.board = new _GameBoard2.default(boardDOM);
       boardDOM.addEventListener('click', this.boardEventHandler.bind(this));
       this.state = new _GameState2.default();
       this.playerColor = _constants.COLORS.checker.light;
-      this.online = online;
-      if (online) {
-        this.socket = io();
-        this.bindSocketEvents();
-        this.socket.emit('add player');
-        this.chat = new _Chat2.default();
-        this.chat.changeSendEvent(this.chatClickHandler.bind(this));
-      } else {
-        // this.test()
-        this.start();
-      }
+      // this.test()
+      // this.start()
     }
 
     _createClass(Checkers, [{
@@ -779,9 +773,6 @@ window.onload = function () {
         if (!this.state.gameStarted) {
           this.state.startGame();
           this.markAvailableCheckers();
-        }
-        if (this.chat) {
-          this.chat.show();
         }
         console.log('game started');
       }
@@ -795,34 +786,9 @@ window.onload = function () {
         this.state = new _GameState2.default();
       }
     }, {
-      key: 'bindSocketEvents',
-      value: function bindSocketEvents() {
-        this.socket.on('can play', this.onCanPlay.bind(this));
-        this.socket.on('message', this.onMessage.bind(this));
-        this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
-        this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
-        this.socket.on('chat message', this.onChatMessage.bind(this));
-        this.socket.on('restart game', this.onRestartGame.bind(this));
-      }
-    }, {
-      key: 'chatClickHandler',
-      value: function chatClickHandler(e) {
-        if (this.chat && this.socket) {
-          var text = this.chat.messageField.value;
-          if (text.length) {
-            text = this.playerColor + ': ' + text;
-            this.socket.emit('send', { message: text });
-            this.chat.clearField();
-            this.chat.addMessage(text);
-          }
-        }
-      }
-    }, {
       key: 'markAvailableCheckers',
       value: function markAvailableCheckers() {
-        if (this.canMove()) {
-          this.board.markAvailableCheckers(this.state.currentTurn);
-        }
+        this.board.markAvailableCheckers(this.state.currentTurn);
       }
     }, {
       key: 'boardEventHandler',
@@ -851,7 +817,7 @@ window.onload = function () {
           this.state.currentChecker = null;
         }
 
-        return false;
+        return true;
       }
     }, {
       key: 'cellClickHandle',
@@ -859,20 +825,88 @@ window.onload = function () {
         var cell = e.target.obj;
         var checker = this.state.currentChecker;
         if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
-          if (this.online) {
-            this.socket.emit('move', {
-              from: checker.cell.getPosition(),
-              to: cell.getPosition()
-            });
-          }
           this.move(checker, cell);
         }
-        return false;
+        return true;
+      }
+    }, {
+      key: 'move',
+      value: function move(checker, toCell) {
+        var moveResult = this.board.move(checker, toCell);
+        if (moveResult === _constants.MOVES.MOVE_COMPLETED) {
+          this.state.setNexnTurn();
+          this.markAvailableCheckers(this.state.currentTurn);
+        }
+        this.state.updateInfo();
+      }
+
+      // TEST
+
+    }, {
+      key: '_test',
+      value: function _test() {
+        console.log('TESTING');
+        this._deleteCheckers([{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 5 }]);
+        this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }, { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
+      }
+    }, {
+      key: '_testCheckers',
+      value: function _testCheckers(checkers) {
+        var _this = this;
+
+        checkers.forEach(function (checker) {
+          var testCell = document.getElementById('cell_' + checker.x + '_' + checker.y).obj;
+          _this.board.createChecker(checker.color, testCell);
+        });
+      }
+    }, {
+      key: '_deleteCheckers',
+      value: function _deleteCheckers(positions) {
+        positions.forEach(function (pos) {
+          var cell = document.getElementById('cell_' + pos.x + '_' + pos.y).obj;
+          if (!cell || !cell.checker) return false;
+          cell.removeChecker();
+        });
+        return true;
+      }
+    }]);
+
+    return Checkers;
+  }();
+
+  var CheckersOnline = function (_Checkers) {
+    _inherits(CheckersOnline, _Checkers);
+
+    function CheckersOnline(boardDOM) {
+      _classCallCheck(this, CheckersOnline);
+
+      var _this2 = _possibleConstructorReturn(this, (CheckersOnline.__proto__ || Object.getPrototypeOf(CheckersOnline)).call(this, boardDOM));
+
+      _this2.socket = io();
+      _this2.bindSocketEvents();
+      _this2.socket.emit('add player');
+      _this2.chat = new _Chat2.default();
+      _this2.chat.changeSendEvent(_this2.chatClickHandler.bind(_this2));
+      return _this2;
+    }
+
+    _createClass(CheckersOnline, [{
+      key: 'start',
+      value: function start() {
+        _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'start', this).call(this);
+        this.chat.show();
       }
     }, {
       key: 'canMove',
       value: function canMove() {
-        return !this.online || this.playerColor === this.state.currentTurn;
+        return this.playerColor === this.state.currentTurn;
+      }
+    }, {
+      key: 'markAvailableCheckers',
+      value: function markAvailableCheckers() {
+        if (this.canMove()) {
+          _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'markAvailableCheckers', this).call(this, this.state.currentTurn);
+        }
       }
     }, {
       key: 'move',
@@ -880,14 +914,44 @@ window.onload = function () {
         var isEnemyMove = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
         if (!isEnemyMove && this.canMove() || isEnemyMove && !this.canMove()) {
-          var moveResult = this.board.move(checker, toCell);
-          if (moveResult === _constants.MOVES.MOVE_COMPLETED) {
-            this.state.setNexnTurn();
-            this.markAvailableCheckers(this.state.currentTurn);
-          } else if (moveResult === _constants.MOVES.CAN_EAT_MORE) {
-            // IDK
+          _get(CheckersOnline.prototype.__proto__ || Object.getPrototypeOf(CheckersOnline.prototype), 'move', this).call(this, checker, toCell);
+        }
+      }
+    }, {
+      key: 'bindSocketEvents',
+      value: function bindSocketEvents() {
+        this.socket.on('can play', this.onCanPlay.bind(this));
+        this.socket.on('message', this.onMessage.bind(this));
+        this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
+        this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
+        this.socket.on('chat message', this.onChatMessage.bind(this));
+        this.socket.on('restart game', this.onRestartGame.bind(this));
+      }
+    }, {
+      key: 'cellClickHandle',
+      value: function cellClickHandle(e) {
+        var cell = e.target.obj;
+        var checker = this.state.currentChecker;
+        if (cell instanceof _Cell2.default && checker && cell.isHighlighted()) {
+          this.socket.emit('move', {
+            from: checker.cell.getPosition(),
+            to: cell.getPosition()
+          });
+          this.move(checker, cell);
+        }
+        return true;
+      }
+    }, {
+      key: 'chatClickHandler',
+      value: function chatClickHandler(e) {
+        if (this.chat && this.socket) {
+          var text = this.chat.messageField.value;
+          if (text.length) {
+            text = this.playerColor + ': ' + text;
+            this.socket.emit('send', { message: text });
+            this.chat.clearField();
+            this.chat.addMessage(text);
           }
-          this.state.updateInfo();
         }
       }
     }, {
@@ -944,42 +1008,12 @@ window.onload = function () {
         this.onCanPlay(data);
         this.restart();
       }
-
-      // TEST
-
-    }, {
-      key: '_test',
-      value: function _test() {
-        console.log('TESTING');
-        this._deleteCheckers([{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 5 }]);
-        this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }, { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
-      }
-    }, {
-      key: '_testCheckers',
-      value: function _testCheckers(checkers) {
-        var _this = this;
-
-        checkers.forEach(function (checker) {
-          var testCell = document.getElementById('cell_' + checker.x + '_' + checker.y).obj;
-          _this.board.createChecker(checker.color, testCell);
-        });
-      }
-    }, {
-      key: '_deleteCheckers',
-      value: function _deleteCheckers(positions) {
-        positions.forEach(function (pos) {
-          var cell = document.getElementById('cell_' + pos.x + '_' + pos.y).obj;
-          if (!cell || !cell.checker) return false;
-          cell.removeChecker();
-        });
-        return true;
-      }
     }]);
 
-    return Checkers;
-  }();
+    return CheckersOnline;
+  }(Checkers);
 
-  window.game = new Checkers(boardDOM, online);
+  window.game = online ? new CheckersOnline(boardDOM) : new Checkers(boardDOM);
   // console.log('Loaded')
 };
 
