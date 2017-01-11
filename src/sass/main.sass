@@ -76,7 +76,7 @@ table#rooms td
     font-weight: 500
     line-height: 1.1
     margin: 10px 1px
-    padding: 10px 14px;
+    padding: 10px 14px
     text-transform: uppercase
     text-align: center
     white-space: nowrap
@@ -258,8 +258,17 @@ table#rooms td
         width: 50%
 
 @media only screen and (max-width: 768px)
+    #home
+        height: 100vh
+        overflow: hidden
+
     .home_wrapper
+        width: 90vw
+        margin: 0 auto
         flex-direction: column
 
     table#rooms
-        width: 90vw
+        width: 100%
+
+    .start_buttons
+        padding: 0
