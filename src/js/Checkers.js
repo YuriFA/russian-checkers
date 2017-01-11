@@ -15,6 +15,7 @@ export class Checkers {
 
   start () {
     if (!this.state.gameStarted) {
+      this.board.show()
       this.state.startGame()
       this.markAvailableCheckers()
     }
@@ -142,12 +143,13 @@ export class CheckersOnline extends Checkers {
   }
 
   bindSocketEvents () {
-    this.socket.on('can play', this.onCanPlay.bind(this))
-    this.socket.on('message', this.onMessage.bind(this))
-    this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this))
-    this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this))
-    this.socket.on('chat message', this.onChatMessage.bind(this))
-    this.socket.on('restart game', this.onRestartGame.bind(this))
+    this.socket
+      .on('can play', this.onCanPlay.bind(this))
+      .on('message', this.onMessage.bind(this))
+      .on('enemy player connected', this.onEnemyPlayerConnected.bind(this))
+      .on('enemy player moved', this.onEnemyPlayerMoved.bind(this))
+      .on('chat message', this.onChatMessage.bind(this))
+      .on('restart game', this.onRestartGame.bind(this))
   }
 
   cellClickHandle (e) {
@@ -170,17 +172,16 @@ export class CheckersOnline extends Checkers {
         text = `${this.playerColor}: ${text}`
         this.socket.emit('send', { message: text })
         this.chat.clearField()
-        this.chat.addMessage(text)
+          .addMessage(text)
       }
     }
   }
-
+  // todo FIX THIS SHIT
   onCanPlay (data) {
     if (data && data.hasOwnProperty('id')) {
-      console.log('You can play')
+      console.log('you can play')
       this.playerColor = PLAYER_COLOR[data.id]
       if (data.id === 2) {
-        // this.playerColor(COLORS.checker.dark)
         this.board.boardDOM.style.transform = 'rotate(180deg)'
         this.start()
       } else {
@@ -192,20 +193,20 @@ export class CheckersOnline extends Checkers {
   }
 
   onMessage (data) {
-    console.log(data.message)
+    console.log(`message: ${data.message}`)
   }
 
   onEnemyPlayerConnected () {
-    console.log('all players ready to start this')
     this.start()
+    console.log('all players ready to start game')
   }
 
   onEnemyPlayerMoved (data) {
-    console.log(data)
     const checker = this.board.getCell(data.from).checker
     const cell = this.board.getCell(data.to)
     if (checker && cell) {
       this.move(checker, cell, true)
+      console.log(`enemy moved from: ${data.from.x},${data.from.y} to: ${data.to.x},${data.to.y}`)
     }
   }
 
@@ -213,13 +214,13 @@ export class CheckersOnline extends Checkers {
     if (data.message) {
       this.chat.addMessage(data.message)
     } else {
-      console.log(`There is a problem: ${data}`)
+      console.log(`there is a problem: ${data}`)
     }
   }
 
   onRestartGame (data) {
-    console.log(`Restarting game...\nWait for players...`)
     this.onCanPlay(data)
     this.restart()
+    console.log(`restarting game...\nwait for players...`)
   }
 }

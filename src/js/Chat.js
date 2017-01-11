@@ -12,10 +12,12 @@ export default class Chat {
     if (this.chat) {
       this.chat.style.display = 'block'
     }
+    return this
   }
 
   clearField () {
     this.messageField.value = ''
+    return this
   }
 
   bindEvents () {
@@ -23,11 +25,13 @@ export default class Chat {
     this.onKeyUp = this.onKeyUp.bind(this)
     this.sendBtn.addEventListener('click', this.onSend)
     this.messageField.addEventListener('keyup', this.onKeyUp)
+    return this
   }
 
   changeSendEvent (clickHandler) {
     this.sendBtn.removeEventListener('click', this.onSend)
     this.sendBtn.addEventListener('click', clickHandler)
+    return this
   }
 
   onSend (e) {
@@ -35,7 +39,7 @@ export default class Chat {
     if (text.length) {
       text = `You: ${text}`
       this.clearField()
-      this.addMessage(text)
+        .addMessage(text)
     }
   }
 
@@ -54,5 +58,6 @@ export default class Chat {
     if (this.chatContent) {
       this.chatContent.innerHTML = html
     }
+    return this
   }
 }

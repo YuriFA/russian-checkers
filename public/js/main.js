@@ -112,11 +112,13 @@ var Chat = function () {
       if (this.chat) {
         this.chat.style.display = 'block';
       }
+      return this;
     }
   }, {
     key: 'clearField',
     value: function clearField() {
       this.messageField.value = '';
+      return this;
     }
   }, {
     key: 'bindEvents',
@@ -125,12 +127,14 @@ var Chat = function () {
       this.onKeyUp = this.onKeyUp.bind(this);
       this.sendBtn.addEventListener('click', this.onSend);
       this.messageField.addEventListener('keyup', this.onKeyUp);
+      return this;
     }
   }, {
     key: 'changeSendEvent',
     value: function changeSendEvent(clickHandler) {
       this.sendBtn.removeEventListener('click', this.onSend);
       this.sendBtn.addEventListener('click', clickHandler);
+      return this;
     }
   }, {
     key: 'onSend',
@@ -138,8 +142,7 @@ var Chat = function () {
       var text = this.messageField.value;
       if (text.length) {
         text = 'You: ' + text;
-        this.clearField();
-        this.addMessage(text);
+        this.clearField().addMessage(text);
       }
     }
   }, {
@@ -160,6 +163,7 @@ var Chat = function () {
       if (this.chatContent) {
         this.chatContent.innerHTML = html;
       }
+      return this;
     }
   }]);
 
@@ -332,6 +336,7 @@ var Checkers = exports.Checkers = function () {
     key: 'start',
     value: function start() {
       if (!this.state.gameStarted) {
+        this.board.show();
         this.state.startGame();
         this.markAvailableCheckers();
       }
@@ -481,12 +486,7 @@ var CheckersOnline = exports.CheckersOnline = function (_Checkers) {
   }, {
     key: 'bindSocketEvents',
     value: function bindSocketEvents() {
-      this.socket.on('can play', this.onCanPlay.bind(this));
-      this.socket.on('message', this.onMessage.bind(this));
-      this.socket.on('enemy player connected', this.onEnemyPlayerConnected.bind(this));
-      this.socket.on('enemy player moved', this.onEnemyPlayerMoved.bind(this));
-      this.socket.on('chat message', this.onChatMessage.bind(this));
-      this.socket.on('restart game', this.onRestartGame.bind(this));
+      this.socket.on('can play', this.onCanPlay.bind(this)).on('message', this.onMessage.bind(this)).on('enemy player connected', this.onEnemyPlayerConnected.bind(this)).on('enemy player moved', this.onEnemyPlayerMoved.bind(this)).on('chat message', this.onChatMessage.bind(this)).on('restart game', this.onRestartGame.bind(this));
     }
   }, {
     key: 'cellClickHandle',
@@ -510,19 +510,19 @@ var CheckersOnline = exports.CheckersOnline = function (_Checkers) {
         if (text.length) {
           text = this.playerColor + ': ' + text;
           this.socket.emit('send', { message: text });
-          this.chat.clearField();
-          this.chat.addMessage(text);
+          this.chat.clearField().addMessage(text);
         }
       }
     }
+    // todo FIX THIS SHIT
+
   }, {
     key: 'onCanPlay',
     value: function onCanPlay(data) {
       if (data && data.hasOwnProperty('id')) {
-        console.log('You can play');
+        console.log('you can play');
         this.playerColor = _constants.PLAYER_COLOR[data.id];
         if (data.id === 2) {
-          // this.playerColor(COLORS.checker.dark)
           this.board.boardDOM.style.transform = 'rotate(180deg)';
           this.start();
         } else {
@@ -535,22 +535,22 @@ var CheckersOnline = exports.CheckersOnline = function (_Checkers) {
   }, {
     key: 'onMessage',
     value: function onMessage(data) {
-      console.log(data.message);
+      console.log('message: ' + data.message);
     }
   }, {
     key: 'onEnemyPlayerConnected',
     value: function onEnemyPlayerConnected() {
-      console.log('all players ready to start this');
       this.start();
+      console.log('all players ready to start game');
     }
   }, {
     key: 'onEnemyPlayerMoved',
     value: function onEnemyPlayerMoved(data) {
-      console.log(data);
       var checker = this.board.getCell(data.from).checker;
       var cell = this.board.getCell(data.to);
       if (checker && cell) {
         this.move(checker, cell, true);
+        console.log('enemy moved from: ' + data.from.x + ',' + data.from.y + ' to: ' + data.to.x + ',' + data.to.y);
       }
     }
   }, {
@@ -559,15 +559,15 @@ var CheckersOnline = exports.CheckersOnline = function (_Checkers) {
       if (data.message) {
         this.chat.addMessage(data.message);
       } else {
-        console.log('There is a problem: ' + data);
+        console.log('there is a problem: ' + data);
       }
     }
   }, {
     key: 'onRestartGame',
     value: function onRestartGame(data) {
-      console.log('Restarting game...\nWait for players...');
       this.onCanPlay(data);
       this.restart();
+      console.log('restarting game...\nwait for players...');
     }
   }]);
 
@@ -627,16 +627,25 @@ var GameBoard = function () {
     this.draw();
   }
 
-  // drawing board
-
-
   _createClass(GameBoard, [{
+    key: 'show',
+    value: function show() {
+      this.boardDOM.style.display = 'block';
+    }
+  }, {
+    key: 'hide',
+    value: function hide() {
+      this.boardDOM.style.display = 'none';
+    }
+
+    // drawing board
+
+  }, {
     key: 'draw',
     value: function draw() {
       for (var i = 1; i <= _constants.N; i++) {
         for (var j = 1; j <= _constants.N; j++) {
           var cell = new _Cell2.default(i, j);
-          // cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this))
           this.boardDOM.appendChild(cell.cellDOM);
           this.drawChecker(cell);
         }
@@ -653,7 +662,6 @@ var GameBoard = function () {
     key: 'createChecker',
     value: function createChecker(color, cell) {
       var checker = new _Checker2.default(color);
-      // checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this))
       checker.belongsTo(cell);
       cell.containChecker(checker);
       return checker;
@@ -745,9 +753,6 @@ var GameBoard = function () {
           moves: moves.filter(freeMoveFilter)
         };
       }
-      // if (checker.isQueen()) {
-      //   console.log('ALO', moves)
-      // }
       return moves.moves.length ? moves : null;
     }
   }, {
@@ -758,7 +763,6 @@ var GameBoard = function () {
       var eatDirection = false;
       var curDirection = direction;
       do {
-        // console.log('DIRECTION', curDirection, eatDirection ? false : onlyEat)
         aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat);
         if (aCell) {
           var isEat = aCell.type === MOVE_TYPE.EAT;
@@ -770,15 +774,10 @@ var GameBoard = function () {
           if (eatDirection) {
             aCell.type = MOVE_TYPE.EAT;
           }
-          console.log(aCell);
           ret.push(aCell);
-          // if (!confirm('CYKA BLYAT')) {
-          //   break
-          // }
         } else {
           break;
         }
-        // console.log(aCell, aCell ? aCell.cell.cellDOM : '', curDirection)
       } while (aCell !== null);
 
       return ret;
@@ -927,6 +926,7 @@ var GameState = function () {
   function GameState() {
     _classCallCheck(this, GameState);
 
+    this.infoDOM = document.getElementById('info');
     this.TURNS = [_constants.COLORS.checker.light, _constants.COLORS.checker.dark];
     // 0 - light, 1 - dark
     this.gameStarted = false;
@@ -939,7 +939,7 @@ var GameState = function () {
     key: 'startGame',
     value: function startGame() {
       this.gameStarted = true;
-      this.updateInfo();
+      this.showInfo();
     }
   }, {
     key: 'endGame',
@@ -959,17 +959,22 @@ var GameState = function () {
       }
     }
   }, {
+    key: 'showInfo',
+    value: function showInfo() {
+      this.infoDOM.style.display = 'block';
+      this.updateInfo();
+    }
+  }, {
     key: 'updateInfo',
     value: function updateInfo() {
-      var infoDOM = document.getElementById('info');
       if (this.gameStarted) {
         var turnsCountDOM = document.getElementById('turns_count');
         var turnColorDOM = document.getElementById('current_turn_color');
-        infoDOM.style.visibility = 'visible';
+        this.infoDOM.style.visibility = 'visible';
         turnsCountDOM.textContent = this.turnsCount;
         turnColorDOM.style.backgroundColor = _constants.BG_COLORS[this.currentTurn];
       } else {
-        infoDOM.style.visibility = 'hidden';
+        this.infoDOM.style.visibility = 'hidden';
       }
     }
   }]);

@@ -1,6 +1,7 @@
 import { COLORS, BG_COLORS } from './constants'
 export default class GameState {
   constructor () {
+    this.infoDOM = document.getElementById('info')
     this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ]
     // 0 - light, 1 - dark
     this.gameStarted = false
@@ -11,7 +12,7 @@ export default class GameState {
 
   startGame () {
     this.gameStarted = true
-    this.updateInfo()
+    this.showInfo()
   }
 
   endGame () {
@@ -29,16 +30,20 @@ export default class GameState {
     }
   }
 
+  showInfo () {
+    this.infoDOM.style.display = 'block'
+    this.updateInfo()
+  }
+
   updateInfo () {
-    const infoDOM = document.getElementById('info')
     if (this.gameStarted) {
       const turnsCountDOM = document.getElementById('turns_count')
       const turnColorDOM = document.getElementById('current_turn_color')
-      infoDOM.style.visibility = 'visible'
+      this.infoDOM.style.visibility = 'visible'
       turnsCountDOM.textContent = this.turnsCount
       turnColorDOM.style.backgroundColor = BG_COLORS[ this.currentTurn ]
     } else {
-      infoDOM.style.visibility = 'hidden'
+      this.infoDOM.style.visibility = 'hidden'
     }
   }
 }

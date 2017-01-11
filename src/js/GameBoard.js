@@ -27,12 +27,19 @@ export default class GameBoard {
     this.draw()
   }
 
+  show () {
+    this.boardDOM.style.display = 'block'
+  }
+
+  hide () {
+    this.boardDOM.style.display = 'none'
+  }
+
   // drawing board
   draw () {
     for (let i = 1; i <= N; i++) {
       for (let j = 1; j <= N; j++) {
         const cell = new Cell(i, j)
-        // cell.cellDOM.addEventListener('click', this.cellClickHandle.bind(this))
         this.boardDOM.appendChild(cell.cellDOM)
         this.drawChecker(cell)
       }
@@ -47,7 +54,6 @@ export default class GameBoard {
 
   createChecker (color, cell) {
     const checker = new Checker(color)
-    // checker.checkerDOM.addEventListener('click', this.checkerClickHandle.bind(this))
     checker.belongsTo(cell)
     cell.containChecker(checker)
     return checker
@@ -130,9 +136,6 @@ export default class GameBoard {
         moves: moves.filter(freeMoveFilter)
       }
     }
-    // if (checker.isQueen()) {
-    //   console.log('ALO', moves)
-    // }
     return moves.moves.length ? moves : null
   }
 
@@ -142,7 +145,6 @@ export default class GameBoard {
     let eatDirection = false
     let curDirection = direction
     do {
-      // console.log('DIRECTION', curDirection, eatDirection ? false : onlyEat)
       aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat)
       if (aCell) {
         let isEat = aCell.type === MOVE_TYPE.EAT
@@ -154,15 +156,10 @@ export default class GameBoard {
         if (eatDirection) {
           aCell.type = MOVE_TYPE.EAT
         }
-        console.log(aCell)
         ret.push(aCell)
-        // if (!confirm('CYKA BLYAT')) {
-        //   break
-        // }
       } else {
         break
       }
-      // console.log(aCell, aCell ? aCell.cell.cellDOM : '', curDirection)
     } while (aCell !== null)
 
     return ret

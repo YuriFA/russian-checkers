@@ -6,7 +6,7 @@ const port = process.env.PORT || 3000
 const path = require('path')
 
 server.listen(port, () => {
-  console.log(`Server listening at port ${port}`)
+  console.log(`server listening at port ${port}`)
 })
 
 app.use(express.static(path.join(__dirname, '/public')))
@@ -26,7 +26,7 @@ io.sockets.on('connection', (socket) => {
         socket.broadcast.emit('enemy player connected')
       }
     }
-    console.log(`Players count: ${numPlayers}`)
+    console.log(`players count: ${numPlayers}`)
   })
 
   socket.on('move', (data) => {
@@ -43,9 +43,9 @@ io.sockets.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     if (addedPlayer) {
-      console.log('Player disconnected')
+      console.log('player disconnected')
       numPlayers--
-      console.log(`Players count: ${numPlayers}`)
+      console.log(`players count: ${numPlayers}`)
       if (numPlayers > 0) {
         socket.broadcast.emit('restart game', { id: numPlayers })
       }
