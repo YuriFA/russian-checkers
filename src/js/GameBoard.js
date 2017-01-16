@@ -256,6 +256,8 @@ export default class GameBoard {
     if (!eatMoves && freeMoves.length) {
       freeMoves.forEach((checker) => checker.mark())
     }
+
+    return eatMoves || freeMoves.length > 0
   }
 
   deactivateCheckers () {

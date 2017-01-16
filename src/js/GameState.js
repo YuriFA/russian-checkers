@@ -3,9 +3,9 @@ export default class GameState {
   constructor () {
     this.infoDOM = document.getElementById('info')
     this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ]
-    // 0 - light, 1 - dark
     this.gameStarted = false
     this.currentTurn = this.TURNS[0]
+    this.prevTurn = null
     this.turnsCount = 0
     this.currentChecker = null
   }
@@ -23,9 +23,18 @@ export default class GameState {
     }
   }
 
+  setWinner (color) {
+    let winnerDOM = document.createElement('div')
+    winnerDOM.className = `winner winner_${color}`
+    winnerDOM.innerHTML = `${color} WIN!!!`
+    document.body.appendChild(winnerDOM)
+    this.endGame()
+  }
+
   setNexnTurn () {
     if (this.gameStarted) {
       this.turnsCount++
+      this.prevTurn = this.currentTurn
       this.currentTurn = this.TURNS[ this.turnsCount % 2 ]
     }
   }

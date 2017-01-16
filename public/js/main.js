@@ -329,7 +329,7 @@ var Checkers = exports.Checkers = function () {
     boardDOM.addEventListener('click', this.boardEventHandler.bind(this));
     this.state = new _GameState2.default();
     this.playerColor = _constants.COLORS.checker.light;
-    // this.start()
+    this._test();
   }
 
   _createClass(Checkers, [{
@@ -354,7 +354,11 @@ var Checkers = exports.Checkers = function () {
   }, {
     key: 'markAvailableCheckers',
     value: function markAvailableCheckers() {
-      this.board.markAvailableCheckers(this.state.currentTurn);
+      var result = this.board.markAvailableCheckers(this.state.currentTurn);
+      console.log(result);
+      if (!result) {
+        this.state.setWinner(this.state.prevTurn);
+      }
     }
   }, {
     key: 'boardEventHandler',
@@ -412,8 +416,10 @@ var Checkers = exports.Checkers = function () {
     key: '_test',
     value: function _test() {
       console.log('TESTING');
-      this._deleteCheckers([{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 3 }, { x: 3, y: 5 }]);
-      this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }, { x: 4, y: 6, color: _constants.COLORS.checker.dark }]);
+      this._deleteCheckers([{ x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 5 }, { x: 1, y: 7 }, { x: 2, y: 2 }, { x: 2, y: 4 }, { x: 2, y: 6 }, { x: 2, y: 8 }]);
+      this._testCheckers([{ x: 2, y: 2, color: _constants.COLORS.checker.light }
+      // {x: 4, y: 6, color: COLORS.checker.dark}
+      ]);
     }
   }, {
     key: '_testCheckers',
@@ -887,6 +893,8 @@ var GameBoard = function () {
           return checker.mark();
         });
       }
+
+      return eatMoves || freeMoves.length > 0;
     }
   }, {
     key: 'deactivateCheckers',
@@ -928,9 +936,9 @@ var GameState = function () {
 
     this.infoDOM = document.getElementById('info');
     this.TURNS = [_constants.COLORS.checker.light, _constants.COLORS.checker.dark];
-    // 0 - light, 1 - dark
     this.gameStarted = false;
     this.currentTurn = this.TURNS[0];
+    this.prevTurn = null;
     this.turnsCount = 0;
     this.currentChecker = null;
   }
@@ -951,10 +959,20 @@ var GameState = function () {
       }
     }
   }, {
+    key: 'setWinner',
+    value: function setWinner(color) {
+      var winnerDOM = document.createElement('div');
+      winnerDOM.className = 'winner winner_' + color;
+      winnerDOM.innerHTML = color + ' WIN!!!';
+      document.body.appendChild(winnerDOM);
+      this.endGame();
+    }
+  }, {
     key: 'setNexnTurn',
     value: function setNexnTurn() {
       if (this.gameStarted) {
         this.turnsCount++;
+        this.prevTurn = this.currentTurn;
         this.currentTurn = this.TURNS[this.turnsCount % 2];
       }
     }
@@ -1023,10 +1041,44 @@ var MOVES = exports.MOVES = {
 var _Checkers = require('./Checkers');
 
 window.onload = function () {
+  var homeDOM = document.getElementById('home');
+  var gameDOM = document.getElementById('game');
   var boardDOM = document.getElementById('board');
-  var online = true;
+  var newGamePopup = document.getElementById('new_game_popup');
+  var showGame = function showGame() {
+    homeDOM.style.height = '0';
+    gameDOM.style.height = '100%';
+  };
+  var createSoloBtn = document.getElementById('create_solo');
+  var createOnlineBtn = document.getElementById('create_online');
+  var createOnlineRoom = document.getElementById('create_room');
 
-  window.game = online ? new _Checkers.CheckersOnline(boardDOM) : new _Checkers.Checkers(boardDOM);
+  createSoloBtn.addEventListener('click', function (e) {
+    window.game = new _Checkers.Checkers(boardDOM);
+    window.game.start();
+    showGame();
+  });
+
+  createOnlineBtn.addEventListener('click', function (e) {
+    newGamePopup.style.left = '0';
+    newGamePopup.style.opacity = '1';
+    document.body.classList.toggle('popup_showing');
+  });
+
+  document.body.addEventListener('click', function (e) {
+    var className = this.getAttribute('class');
+    if (className && className.indexOf('popup_showing') !== -1 && e.target === newGamePopup) {
+      newGamePopup.style.left = '-100%';
+      newGamePopup.style.opacity = '0';
+      document.body.classList.remove('popup_showing');
+    }
+  });
+
+  createOnlineRoom.addEventListener('click', function (e) {
+    var name = newGamePopup.querySelector('#game_name').value || 'Без названия';
+  });
+
+  // window.game = online ? new CheckersOnline(boardDOM) : new Checkers(boardDOM)
 };
 
 },{"./Checkers":4}]},{},[8])

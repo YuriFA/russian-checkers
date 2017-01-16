@@ -10,7 +10,7 @@ export class Checkers {
     boardDOM.addEventListener('click', this.boardEventHandler.bind(this))
     this.state = new GameState()
     this.playerColor = COLORS.checker.light
-    // this.start()
+    this._test()
   }
 
   start () {
@@ -31,7 +31,11 @@ export class Checkers {
   }
 
   markAvailableCheckers () {
-    this.board.markAvailableCheckers(this.state.currentTurn)
+    let result = this.board.markAvailableCheckers(this.state.currentTurn)
+    console.log(result)
+    if (!result) {
+      this.state.setWinner(this.state.prevTurn)
+    }
   }
 
   boardEventHandler (e) {
@@ -83,14 +87,18 @@ export class Checkers {
   _test () {
     console.log('TESTING')
     this._deleteCheckers([
+      {x: 1, y: 1},
       {x: 1, y: 3},
+      {x: 1, y: 5},
+      {x: 1, y: 7},
       {x: 2, y: 2},
-      {x: 3, y: 3},
-      {x: 3, y: 5}
+      {x: 2, y: 4},
+      {x: 2, y: 6},
+      {x: 2, y: 8}
     ])
     this._testCheckers([
-      {x: 2, y: 2, color: COLORS.checker.light},
-      {x: 4, y: 6, color: COLORS.checker.dark}
+      {x: 2, y: 2, color: COLORS.checker.light}
+      // {x: 4, y: 6, color: COLORS.checker.dark}
     ])
   }
 

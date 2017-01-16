@@ -10,47 +10,90 @@
     <div id="home">
         <h1>Шашки</h1>
         <div class="home_wrapper">
-            <table id="rooms" class="md_shadow">
-                <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>Имя</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Игрок так себе</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Гроссмейстер</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Заходи</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Заходи</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Заходи</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Заходи</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Заходи</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table_wrapper md_shadow">
+                <div class="scroll_window">
+                    <table id="rooms" class="fixed_header">
+                        <thead>
+                            <tr>
+                                <th><div>id</div></th>
+                                <th><div>Имя</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Игрок так себе</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Гроссмейстер</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Заходи</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div class="start_buttons">
-                <button class="btn">Создать игру</button>
-                <button class="btn">Играть с компьютером(пока с собой)</button>
+                <button id="create_online" class="btn">Создать игру</button>
+                <button id="create_solo" class="btn">Играть с компьютером(пока с собой)</button>
+            </div>
+            <div id="new_game_popup">
+                <div class="popup_window">
+                    <input type="text" required="required" id="game_name">
+                    <label for="game_name" class="textarea_label">Назвовите игру</label>
+                    <button class="btn" id="create_room">Создать</button>
+                </div>
             </div>
         </div>
     </div>
