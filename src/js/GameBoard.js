@@ -15,7 +15,6 @@ export default class GameBoard {
     this.markAvailableCheckers(this.state.currentTurn)
   }
 
-  // drawing board
   draw () {
     for (let i = 1; i <= N; i++) {
       for (let j = 1; j <= N; j++) {
@@ -67,13 +66,11 @@ export default class GameBoard {
   move (checker, cell) {
     const wasEaten = this.eatIfItPossible(checker, cell)
     checker.moveTo(cell)
-    console.log(wasEaten)
     if (checker.canQueened()) {
-      console.log('QUEENED')
       checker.makeQueen()
     }
 
-    const mustEat = this.getAvailableMoves(checker, true) // only for eat(jump)
+    const mustEat = this.getAvailableMoves(checker, true)
     this.deactivateCheckers()
     if (wasEaten && mustEat) {
       checker.activate()
@@ -94,9 +91,8 @@ export default class GameBoard {
   }
 
   getCheckers (color, marked = false) {
-    let checkers = document.querySelectorAll(`.checker.checker__${color}${marked ? '.marked' : ''}`)
-    checkers = Object.keys(checkers).map((i) => (checkers[i] = checkers[i].obj))
-    return checkers
+    const checkersDOM = document.querySelectorAll(`.checker.checker__${color}${marked ? '.marked' : ''}`)
+    return Object.keys(checkersDOM).map((i) => checkersDOM[i].obj)
   }
 
   showMoves (moves) {
@@ -115,7 +111,6 @@ export default class GameBoard {
     const freeMoveFilter = (mv) => mv && mv.cell && mv.type === MOVE_TYPE.FREE
     let moves = []
     if (checker.isQueen()) {
-      console.log('searching moves for queen')
       moves.push(
         ...this.getAvailableCellsForQueen(checker, checkerMoves.fw[ LEFT ], onlyEat),
         ...this.getAvailableCellsForQueen(checker, checkerMoves.fw[ RIGHT ], onlyEat),
@@ -123,7 +118,6 @@ export default class GameBoard {
         ...this.getAvailableCellsForQueen(checker, checkerMoves.bw[ RIGHT ], onlyEat)
       )
     } else {
-      // console.log('searching moves for checker')
       moves.push(
         this.getAvailableCell(checker, checkerMoves.fw[ LEFT ], onlyEat),
         this.getAvailableCell(checker, checkerMoves.fw[ RIGHT ], onlyEat),
@@ -142,9 +136,6 @@ export default class GameBoard {
         moves: moves.filter(freeMoveFilter)
       }
     }
-    // if (checker.isQueen()) {
-    //   console.log('ALO', moves)
-    // }
     return moves.moves.length ? moves : null
   }
 
@@ -154,7 +145,6 @@ export default class GameBoard {
     let eatDirection = false
     let curDirection = direction
     do {
-      // console.log('DIRECTION', curDirection, eatDirection ? false : onlyEat)
       aCell = this.getAvailableCell(checker, curDirection, eatDirection ? false : onlyEat)
       if (aCell) {
         let isEat = aCell.type === MOVE_TYPE.EAT
@@ -166,15 +156,10 @@ export default class GameBoard {
         if (eatDirection) {
           aCell.type = MOVE_TYPE.EAT
         }
-        console.log(aCell)
         ret.push(aCell)
-        // if (!confirm('CYKA BLYAT')) {
-        //   break
-        // }
       } else {
         break
       }
-      // console.log(aCell, aCell ? aCell.cell.cellDOM : '', curDirection)
     } while (aCell !== null)
 
     return ret
@@ -231,14 +216,10 @@ export default class GameBoard {
     let curDirection = this.calcNextDirectionCell(cellFrom, direction)
     while (enemy !== cellTo) {
       enemy = this.getCell(curDirection)
-      // console.log(curDirection, enemy, this.getCell(curDirection))
       if (enemy && enemy.hasChecker() || !enemy) {
         break
       }
       curDirection = this.calcNextDirectionCell(curDirection, direction)
-      // if (!confirm('CYKA BLYAT')) {
-      //   break
-      // }
     }
     return enemy
   }

@@ -26,24 +26,30 @@ export default class Cell {
       y: this.y
     }
   }
+
   containChecker (checker) {
     this.checker = checker
   }
+
   hasChecker () {
     return this.checker != null
   }
+
   removeChecker () {
     if (this.checker) {
       this.cellDOM.removeChild(this.checker.checkerDOM)
       this.checker = null
     }
   }
+
   highlight () {
     this.cellDOM.classList.toggle('highlight')
   }
+
   unhighlight () {
     this.cellDOM.classList.remove('highlight')
   }
+  
   isHighlighted () {
     return this.cellDOM.classList.contains('highlight')
   }
