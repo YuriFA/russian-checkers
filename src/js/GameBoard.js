@@ -35,7 +35,6 @@ export default class GameBoard {
     this.boardDOM.style.display = 'none'
   }
 
-  // drawing board
   draw () {
     for (let i = 1; i <= N; i++) {
       for (let j = 1; j <= N; j++) {
@@ -64,11 +63,10 @@ export default class GameBoard {
     const wasEaten = this.eatIfItPossible(checker, cell)
     checker.moveTo(cell)
     if (checker.canQueened()) {
-      console.log('QUEENED')
       checker.makeQueen()
     }
 
-    const mustEat = this.getAvailableMoves(checker, true) // only for eat(jump)
+    const mustEat = this.getAvailableMoves(checker, true)
     this.deactivateCheckers()
     if (wasEaten && mustEat) {
       checker.activate()
@@ -88,9 +86,8 @@ export default class GameBoard {
   }
 
   getCheckers (color, marked = false) {
-    let checkers = document.querySelectorAll(`.checker.checker__${color}${marked ? '.marked' : ''}`)
-    checkers = Object.keys(checkers).map((i) => (checkers[i] = checkers[i].obj))
-    return checkers
+    const checkersDOM = document.querySelectorAll(`.checker.checker__${color}${marked ? '.marked' : ''}`)
+    return Object.keys(checkersDOM).map((i) => checkersDOM[i].obj)
   }
 
   showMoves (moves) {
@@ -109,7 +106,6 @@ export default class GameBoard {
     const freeMoveFilter = (mv) => mv && mv.cell && mv.type === MOVE_TYPE.FREE
     let moves = []
     if (checker.isQueen()) {
-      console.log('searching moves for queen')
       moves.push(
         ...this.getAvailableCellsForQueen(checker, checkerMoves.fw[ LEFT ], onlyEat),
         ...this.getAvailableCellsForQueen(checker, checkerMoves.fw[ RIGHT ], onlyEat),
@@ -117,7 +113,6 @@ export default class GameBoard {
         ...this.getAvailableCellsForQueen(checker, checkerMoves.bw[ RIGHT ], onlyEat)
       )
     } else {
-      // console.log('searching moves for checker')
       moves.push(
         this.getAvailableCell(checker, checkerMoves.fw[ LEFT ], onlyEat),
         this.getAvailableCell(checker, checkerMoves.fw[ RIGHT ], onlyEat),

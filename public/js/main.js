@@ -211,9 +211,6 @@ var Checker = function () {
     }();
   }
 
-  // public methods
-
-
   _createClass(Checker, [{
     key: 'activate',
     value: function activate() {
@@ -643,9 +640,6 @@ var GameBoard = function () {
     value: function hide() {
       this.boardDOM.style.display = 'none';
     }
-
-    // drawing board
-
   }, {
     key: 'draw',
     value: function draw() {
@@ -679,11 +673,10 @@ var GameBoard = function () {
       var wasEaten = this.eatIfItPossible(checker, cell);
       checker.moveTo(cell);
       if (checker.canQueened()) {
-        console.log('QUEENED');
         checker.makeQueen();
       }
 
-      var mustEat = this.getAvailableMoves(checker, true); // only for eat(jump)
+      var mustEat = this.getAvailableMoves(checker, true);
       this.deactivateCheckers();
       if (wasEaten && mustEat) {
         checker.activate();
@@ -709,11 +702,10 @@ var GameBoard = function () {
     value: function getCheckers(color) {
       var marked = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
-      var checkers = document.querySelectorAll('.checker.checker__' + color + (marked ? '.marked' : ''));
-      checkers = Object.keys(checkers).map(function (i) {
-        return checkers[i] = checkers[i].obj;
+      var checkersDOM = document.querySelectorAll('.checker.checker__' + color + (marked ? '.marked' : ''));
+      return Object.keys(checkersDOM).map(function (i) {
+        return checkersDOM[i].obj;
       });
-      return checkers;
     }
   }, {
     key: 'showMoves',
