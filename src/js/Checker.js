@@ -1,4 +1,9 @@
-import { QUEEN_LINE } from './constants'
+import { COLORS, N } from './constants'
+
+const QUEEN_LINE = {
+  [ COLORS.checker.dark ]: N,
+  [ COLORS.checker.light ]: 1
+}
 
 export default class Checker {
   constructor (color) {
@@ -26,17 +31,18 @@ export default class Checker {
       cell.cellDOM.appendChild(this.checkerDOM)
     }
   }
-
-  mark () {
+  mark (selfTurn = true) {
     this.marked = true
-    this.checkerDOM.classList.toggle('marked')
+    if (selfTurn) {
+      this.checkerDOM.classList.toggle('marked')
+    }
   }
 
   unmark () {
     this.marked = false
     this.checkerDOM.classList.remove('marked')
   }
-  
+
   isMarked () {
     return this.marked
   }
@@ -59,7 +65,7 @@ export default class Checker {
     this.queen = true
     this.checkerDOM.classList.toggle('queen')
   }
-  
+
   isQueen () {
     return this.queen
   }

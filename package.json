@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "babel src -d public",
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "babel": {
@@ -23,6 +23,10 @@
     "url": "https://github.com/YuriFA/russian_checkers/issues"
   },
   "homepage": "https://github.com/YuriFA/russian_checkers#readme",
+  "dependencies": {
+    "socket.io": "latest",
+    "express": "latest"
+  },
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-preset-es2015": "^6.18.0",

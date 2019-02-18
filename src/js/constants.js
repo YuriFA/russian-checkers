@@ -16,35 +16,11 @@ export const COLORS = {
     false: 'white'
   }
 }
-export const MOVE_TYPE = {
-  FREE: 0,
-  EAT: 1
+export const PLAYER_COLOR = {
+  1: COLORS.checker.light,
+  2: COLORS.checker.dark
 }
-export const LEFT = 0
-export const RIGHT = 1
-export const QUEEN_LINE = {
-  [ COLORS.checker.dark ]: N,
-  [ COLORS.checker.light ]: 1
-}
-export const MOVE_MAP = {
-  [ COLORS.checker.light ]: {
-    fw: [
-      { x: -1, y: -1 },
-      { x: -1, y: 1 }
-    ],
-    bw: [
-      { x: 1, y: -1 },
-      { x: 1, y: 1 }
-    ]
-  },
-  [ COLORS.checker.dark ]: {
-    fw: [
-      { x: 1, y: -1 },
-      { x: 1, y: 1 }
-    ],
-    bw: [
-      { x: -1, y: -1 },
-      { x: -1, y: 1 }
-    ]
-  }
+export const MOVES = {
+  MOVE_COMPLETED: 0,
+  CAN_EAT_MORE: 1
 }

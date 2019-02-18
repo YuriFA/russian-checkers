@@ -1,33 +1,58 @@
 import { COLORS, BG_COLORS } from './constants'
 export default class GameState {
   constructor () {
+    this.infoDOM = document.getElementById('info')
     this.TURNS = [ COLORS.checker.light, COLORS.checker.dark ]
-    // 0 - light, 1 - dark
-    this.started = false
+    this.gameStarted = false
     this.currentTurn = this.TURNS[0]
+    this.prevTurn = null
     this.turnsCount = 0
     this.currentChecker = null
-    this.updateInfo()
   }
 
   startGame () {
-    this.start = true
+    this.gameStarted = true
+    this.showInfo()
   }
 
   endGame () {
-    this.currentChecker = null
-    this.currentTurn = null
+    if (this.gameStarted) {
+      this.gameStarted = false
+      this.currentChecker = null
+      this.currentTurn = null
+    }
+  }
+
+  setWinner (color) {
+    let winnerDOM = document.createElement('div')
+    winnerDOM.className = `winner winner_${color}`
+    winnerDOM.innerHTML = `${color} WIN!!!`
+    document.body.appendChild(winnerDOM)
+    this.endGame()
   }
 
   setNexnTurn () {
-    this.turnsCount++
-    this.currentTurn = this.TURNS[ this.turnsCount % 2 ]
+    if (this.gameStarted) {
+      this.turnsCount++
+      this.prevTurn = this.currentTurn
+      this.currentTurn = this.TURNS[ this.turnsCount % 2 ]
+    }
+  }
+
+  showInfo () {
+    this.infoDOM.style.display = 'block'
+    this.updateInfo()
   }
 
   updateInfo () {
-    const turnsCountDOM = document.getElementById('turns_count')
-    const turnColorDOM = document.getElementById('current_turn_color')
-    turnsCountDOM.textContent = this.turnsCount
-    turnColorDOM.style.backgroundColor = BG_COLORS[ this.currentTurn ]
+    if (this.gameStarted) {
+      const turnsCountDOM = document.getElementById('turns_count')
+      const turnColorDOM = document.getElementById('current_turn_color')
+      this.infoDOM.style.visibility = 'visible'
+      turnsCountDOM.textContent = this.turnsCount
+      turnColorDOM.style.backgroundColor = BG_COLORS[ this.currentTurn ]
+    } else {
+      this.infoDOM.style.visibility = 'hidden'
+    }
   }
 }
