@@ -1,5 +1,5 @@
 export default class Chat {
-  constructor () {
+  constructor() {
     this.chat = document.getElementById('chat')
     this.chatMessages = []
     this.chatContent = document.getElementById('chat_content')
@@ -8,56 +8,64 @@ export default class Chat {
     this.bindEvents()
   }
 
-  show () {
+  show() {
     if (this.chat) {
       this.chat.style.display = 'block'
     }
+
     return this
   }
 
-  clearField () {
+  clearField() {
     this.messageField.value = ''
+
     return this
   }
 
-  bindEvents () {
+  bindEvents() {
     this.onSend = this.onSend.bind(this)
     this.onKeyUp = this.onKeyUp.bind(this)
     this.sendBtn.addEventListener('click', this.onSend)
     this.messageField.addEventListener('keyup', this.onKeyUp)
+
     return this
   }
 
-  changeSendEvent (clickHandler) {
+  changeSendEvent(clickHandler) {
     this.sendBtn.removeEventListener('click', this.onSend)
     this.sendBtn.addEventListener('click', clickHandler)
+
     return this
   }
 
-  onSend (e) {
-    var text = this.messageField.value
+  onSend() {
+    let text = this.messageField.value
+
     if (text.length) {
       text = `You: ${text}`
-      this.clearField()
-        .addMessage(text)
+      this.clearField().addMessage(text)
     }
   }
 
-  onKeyUp (e) {
+  onKeyUp(e) {
     if (e.keyCode === 13) {
       this.sendBtn.click()
     }
   }
 
-  addMessage (message) {
+  addMessage(message) {
     this.chatMessages.push(message)
-    var html = ''
-    for (var i = 0; i < this.chatMessages.length; i++) {
+
+    let html = ''
+
+    for (let i = 0; i < this.chatMessages.length; i += 1) {
       html += `${this.chatMessages[i]}<br />`
     }
+
     if (this.chatContent) {
       this.chatContent.innerHTML = html
     }
+
     return this
   }
 }

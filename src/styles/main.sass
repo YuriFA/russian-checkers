@@ -7,6 +7,11 @@
 *
     font-family: monospace
 
+*,
+*::after,
+*::before
+  box-sizing: border-box
+
 body
     background: rgb(241, 241, 241)
     height: 100vh
@@ -247,7 +252,8 @@ table#rooms td
     height: 40vmin
     color: #212121
     padding: 10px
-    background-color: #F2F2F2
+    font-size: 2.5vmin
+    background-color: #fff
     overflow-y: scroll
 
 .chat_bottom
@@ -260,13 +266,13 @@ table#rooms td
     box-sizing: border-box
     padding-left: 2vmin
     padding-right: 8vmin
-    font-size: 2.5vmin
+    font-size: 2.2vmin
     height: 8vmin
 
 #send
     position: absolute
     background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/104946/ic_send_white_48dp.png')
-    background-size: contain
+    background-size: 80%
     background-repeat: no-repeat
     background-color: #f44336
     background-position: center

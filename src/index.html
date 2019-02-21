@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Russian checkers</title>
+</head>
+<body>
+  <div id="home">
+    <h1>Russian checkers</h1>
+    <div class="home_wrapper">
+      <div class="table_wrapper md_shadow">
+        <div class="scroll_window">
+          <table id="rooms" class="fixed_header">
+            <thead>
+              <tr>
+                <th>
+                  <div>id</div>
+                </th>
+                <th>
+                  <div>Имя</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Игрок так себе</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Гроссмейстер</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Заходи</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Заходи</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Заходи</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Заходи</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="start_buttons">
+        <button id="create_online" class="btn">Создать игру</button>
+        <button id="create_solo" class="btn">Играть с компьютером(пока с собой)</button>
+      </div>
+      <div id="new_game_popup">
+        <div class="popup_window">
+          <input type="text" required="required" id="game_name">
+          <label for="game_name" class="textarea_label">Назвовите игру</label>
+          <button class="btn" id="create_room">Создать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="game">
+    <div id="info">
+      <div class="turns">
+        <span>Ходов: <span id="turns_count"></span></span>
+      </div>
+      <div class="current_turn">
+        <span>Текущий ход:</span>
+        <div id="current_turn_color"></div>
+      </div>
+      <div id="chat" class="md_shadow">
+        <div class="chat_window">
+          <div id="chat_content"></div>
+          <div class="chat_bottom">
+            <input type="text" id="message" placeholder="Напишите сообщение...">
+            <input type="button" id="send" title="Отправить">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="board_container md_shadow">
+      <div id="board" class="board"></div>
+    </div>
+  </div>
+</body>
+</html>

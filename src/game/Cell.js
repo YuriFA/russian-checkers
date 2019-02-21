@@ -1,11 +1,11 @@
-import {COLORS, WH} from './constants'
+import { COLORS, WH } from './constants'
 
 export default class Cell {
-  constructor (x, y) {
+  constructor(x, y) {
     this.x = x
     this.y = y
     this.id = `cell_${x}_${y}`
-    this.color = COLORS.cell[ x % 2 === y % 2 ]
+    this.color = COLORS.cell[x % 2 === y % 2]
     this.checker = null
     this.cellDOM = (() => {
       const cell = document.createElement('div')
@@ -13,44 +13,43 @@ export default class Cell {
       cell.className = `cell cell__${this.color}`
       cell.style.width = `${WH}%`
       cell.style.height = `${WH}%`
-      if (!cell.hasOwnProperty('obj')) {
-        cell.obj = this
-      }
+      cell.obj = cell.obj || this
+
       return cell
     })()
   }
 
-  getPosition () {
+  getPosition() {
     return {
       x: this.x,
-      y: this.y
+      y: this.y,
     }
   }
 
-  containChecker (checker) {
+  containChecker(checker) {
     this.checker = checker
   }
 
-  hasChecker () {
+  hasChecker() {
     return this.checker != null
   }
 
-  removeChecker () {
+  removeChecker() {
     if (this.checker) {
       this.cellDOM.removeChild(this.checker.checkerDOM)
       this.checker = null
     }
   }
 
-  highlight () {
+  highlight() {
     this.cellDOM.classList.toggle('highlight')
   }
 
-  unhighlight () {
+  unhighlight() {
     this.cellDOM.classList.remove('highlight')
   }
-  
-  isHighlighted () {
+
+  isHighlighted() {
     return this.cellDOM.classList.contains('highlight')
   }
 }

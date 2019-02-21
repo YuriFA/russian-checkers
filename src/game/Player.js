@@ -1,9 +1,5 @@
 export default class PlayerHuman {
-  constructor (color) {
+  constructor(color) {
     this.color = color
-  }
-
-  turn () {
-
   }
 }
