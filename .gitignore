@@ -2,3 +2,5 @@
 node_modules/
 etc/config.json
 script
+
+yarn-error.log
